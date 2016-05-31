@@ -2,51 +2,39 @@
 
 <html lang="en">
 <head>
-<title>Web VR boilerplate</title>
+<title>Webb-Cluster</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="stylesheet" href="src/css/main.css">
+	
+
 </head>
 
-<body>
+<body onload="foo()">
+	
+         
 <!--[if lt IE 10]>
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
 
-        <div id="ui">
-            Show stars visible from Earth?
-            <input type="checkbox" id="visible" checked><br>
-            Show cluster stars?
-            <input type="checkbox" id="cluster" checked><br>
-            Rotate?
-            <input type="checkbox" id="rotate"><br>
-            Free-fly?
-            <input type="checkbox" id="freefly"><br>
-            <h3>Field of View</h3>
-            <form id="fov">
-                <input type="radio" name="fov" id="fovHuman" value="human">Human FOV<br>
-                <input type="radio" name="fov" id="fovWide" value="wide" checked>Wide FOV
-            </form>
 
-            <h3>Position</h3>
-            <form id="position">
-                <input type="radio" name="position" id="flyTo0" value="0" checked>(0, 0, 0)<br>
-                <input type="radio" name="position" id="flyTo5" value="5">(0, 0, 5pc)<br>
-                <input type="radio" name="position" id="flyTo10" value="10">(0, 0, 10pc)
-            </form>
-        </div>
-		
+
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/1.1.1/chroma.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
 <script src="src/js/vendor/three.min.js"></script>
 <script src="src/js/vendor/TweenLite.min.js"></script>
-<script src="src/js/vendor/MouseControls.js"></script>
+
+
 <script src="src/js/controls/DeviceOrientationControls.js"></script>
 <script src="src/js/effects/StereoEffect.js"></script>
+
+<script src="src/js/stats.js"></script>
+<script src="src/js/DAT.gui.js"></script>
+<script src = "src/js/data.js" ></script>
 
 <script>
 /*
@@ -93,7 +81,7 @@ WebVRConfig = {
 <!--
   three.js 3d library
   -->
-<script src="node_modules/three/three.js"></script>
+	<script src="node_modules/three/three.js"></script>
 
 <!--
   VRControls.js acquires positional information from connected VR devices and applies the transformations to a three.js camera object.
@@ -115,6 +103,31 @@ WebVRConfig = {
   -->
 <script src="build/webvr-manager.js"></script>
 
+
+<script src="node_modules/three/examples/js/materials/ShadowMaterial.js"></script>
+
+<script src="node_modules/three/examples/js/controls/TrackballControls.js"></script>
+<script type="x-shader/x-vertex" id="vertexshader">
+			attribute float size;
+			attribute vec3 customColor;
+			varying vec3 vColor;
+			void main() {
+				vColor = customColor;
+				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+				gl_PointSize = size * ( 300.0 / -mvPosition.z );
+				gl_Position = projectionMatrix * mvPosition;
+			}
+		</script>
+
+		<script type="x-shader/x-fragment" id="fragmentshader">
+			uniform vec3 color;
+			uniform sampler2D texture;
+			varying vec3 vColor;
+			void main() {
+				gl_FragColor = vec4( color * vColor, 1.0 );
+				gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
+			}
+		</script>
 <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
  <script>
 (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
@@ -132,8 +145,13 @@ var scene,
     camera,
     renderer,
 	effect,
+	stats,
+	gui,
+	earthMesh,
 	params,
 	manager,
+	uniforms,
+    cameraControls,
     //colorScale,
     colorScaleRed,
     colorScaleWhite,
@@ -143,42 +161,21 @@ var scene,
     visibleParticles,
     clusters,
     clusterParticles,
-    checkRotate,
-    checkVisible,
-    checkCluster,
-    radioFovHuman,
-    radioFovWide,
+    checkRotate = false,
     FOV_HUMAN = 27,
     FOV_WIDE = 75,
     ROTATE_ANGLE_HUMAN = 0.001,
     ROTATE_ANGLE_WIDE = 0.003,
     ROTATE_AXIS = new THREE.Vector3(1, 0, 0),
-    rotateAngle,
-    radioFlyTo0,
-    radioFlyTo5,
-    radioFlyTo10;
+    rotateAngle;
+	
+
+var clock = new THREE.Clock();
 
 init();
 
 animate();
 
-Papa.parse('src/data/movie.csv', {
-    download: true,
-    header: true,
-    dynamicTyping: true,
-    complete: function (results) {
-        createGeometry(results.data, 'cluster');
-    }
-});
-
-Papa.parse('src/data/visible.csv', {
-    download: true,
-    header: true,
-    dynamicTyping: true,
-    complete: function (results) {
-        createGeometry(results.data, 'visible');
-    }
-});
 
 
 
@@ -188,15 +185,18 @@ function init() {
     camera = new THREE.PerspectiveCamera(FOV_WIDE,
                                          window.innerWidth / window.innerHeight,
                                          0.1,
-                                         20000);
+                                         10000000);
 
     rotateAngle = ROTATE_ANGLE_HUMAN;
-    //camera.setLens(300);
 
+ 
+    //camera.setLens(300);
+    camera.position.z = 320;
+   
     renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize( window.innerWidth, window.innerHeight );
-    
+
 
      // Apply VR stereo rendering to renderer.
     effect = new THREE.VREffect(renderer);
@@ -206,6 +206,7 @@ function init() {
    // effect = new THREE.StereoEffect( renderer );
 	//alert(effect);
 	//effect.setSize( window.innerWidth, window.innerHeight );
+	
 	
 	// Create a VR manager helper to enter and exit VR mode.
     params = {
@@ -218,10 +219,130 @@ function init() {
 	
 	// Apply VR headset positional data to camera.
     controls = new THREE.VRControls(camera);
+	controls.standing = true;
+	
+    stats = new Stats();
+	stats.domElement.style.position = 'absolute';
+	stats.domElement.style.bottom = '0px';
+	stats.domElement.style.zIndex = 100;
+	  document.body.appendChild( stats.domElement );
+	  
+/////////
+	// GUI //
+	/////////
+	
+	gui = new dat.GUI();
+	parameters = 
+	{ se: true, cs: true, mv: true,rot: false, hfov: false, wfov: true, zz: true, z5: false, z10: false,  color: "#ffff00" };
+	
+
+	 
+	var folder1 = gui.addFolder('Toggle Features');
+	
+	var seGUI = folder1.add( parameters, 'se' ).name("Earth visible stars").listen();
+	seGUI.onChange( function(value) { 
+	 visibleParticles.visible = value;
+	
+	});
+	var csGUI = folder1.add( parameters, 'cs' ).name("Cluster stars").listen();
+	csGUI.onChange( function(value) { 
+    
+	clusterParticles.visible = value;
+	
+	});
+	
+    var rotGUI = folder1.add( parameters, 'rot' ).name("Rotate").listen();
+	rotGUI.onChange( function(value) { 
+	  checkRotate = value;
+	
+	});
+	
+	var mvGUI = folder1.add( parameters, 'mv' ).name("Earth").listen();
+	mvGUI.onChange( function(value) { 
+	earthMesh.visible = value;
+	
+	});
+    folder1.open();
+	
+	var folder2 = gui.addFolder('Toggle Field of View');
+	var hfovGUI = folder2.add( parameters, 'hfov' ).name("Human View").listen();
+	hfovGUI.onChange( function(value) { 
+	parameters.wfov = false;
+	parameters.hfov = true;
+	  TweenLite.to(camera, 1, {fov: FOV_HUMAN, onUpdate: function() {
+            camera.updateProjectionMatrix();
+        }, onComplete: function() {
+            rotateAngle = ROTATE_ANGLE_HUMAN;
+        }});
+	
+	});
+	
+	var wfovGUI = folder2.add( parameters, 'wfov' ).name("Wide View").listen();
+	wfovGUI.onChange( function(value) { 
+	
+	parameters.hfov = false;
+	parameters.wfov = true;
+	 TweenLite.to(camera, 1, {fov: FOV_WIDE, onUpdate: function() {
+            camera.updateProjectionMatrix();
+        }, onComplete: function() {
+            rotateAngle = ROTATE_ANGLE_WIDE;
+        }});
+	
+	});
+	
+	folder2.open();
+
+	
+	
+	var folder3 = gui.addFolder('Toggle Position');
+	var zzGUI = folder3.add( parameters, 'zz' ).name("(0 0 0)").listen();
+	zzGUI.onChange( function(value) { 
+	  parameters.zz = true;
+      parameters.z5 = false;
+	  parameters.z10 = false;
+	  flyTo(new THREE.Vector3(0, 0, 0));
+	});
+	
+	var z5 = folder3.add( parameters, 'z5' ).name("(0,0,5 pc)").listen();
+	z5.onChange( function(value) { 
+	  parameters.zz = false;
+      parameters.z5 = true;
+	  parameters.z10 = false;
+	  flyTo(new THREE.Vector3(0, 0, 5));
+	});
+	
+	var z10 = folder3.add( parameters, 'z10' ).name("(0,0,10 pc)").listen();
+	z10.onChange( function(value) { 
+	 parameters.zz = false;
+      parameters.z5 = false;
+	  parameters.z10 = true;
+	  flyTo(new THREE.Vector3(0, 0, 10));
+	});
+	
+	folder3.open();
+	// cameraControls = new THREE.TrackballControls(camera, renderer.domElement);
+    // cameraControls.target.set(0, 0, 0);
+				
     /*var freefly = document.getElementbyId('freefly');
 	alert(freefly);
 	if(freefly.checked)
 	{controls.standing = true; controls.update();}*/
+
+	
+    var textureLoader = new THREE.TextureLoader();
+
+    var earth = textureLoader.load( 'src/images/earthmap1k.jpg' );
+	//var spec = textureLoader.load('src/images/earthspec1k.jpg');
+	earthMesh = new THREE.Mesh(
+					new THREE.SphereBufferGeometry(0.5, 32, 32 ),
+					new THREE.MeshBasicMaterial( {  map: earth, blending: THREE.AdditiveBlending} )
+				);
+
+	
+    scene.add( earthMesh );
+	
+
+
 
     document.body.appendChild( renderer.domElement );
 
@@ -254,82 +375,78 @@ function init() {
     colorScaleBlue = chroma.scale(['lightcyan', 'lightsteelblue', 'black'])
         .domain([-9, -1, 6.5]);
 
-    checkRotate = document.getElementById('rotate');
-    checkVisible = document.getElementById('visible');
-    checkCluster = document.getElementById('cluster');
-    radioFovHuman = document.getElementById('fovHuman');
-    radioFovWide = document.getElementById('fovWide');
-    radioFlyTo0 = document.getElementById('flyTo0');
-    radioFlyTo5 = document.getElementById('flyTo5');
-    radioFlyTo10 = document.getElementById('flyTo10');
-
-    checkVisible.addEventListener('click', function() {
-        visibleParticles.visible = checkVisible.checked;
-    });
-
-    checkCluster.addEventListener('click', function() {
-        clusterParticles.visible = checkCluster.checked;
-    });
-
-    radioFovHuman.addEventListener('click', function() {
-        TweenLite.to(camera, 1, {fov: FOV_HUMAN, onUpdate: function() {
-            camera.updateProjectionMatrix();
-        }, onComplete: function() {
-            rotateAngle = ROTATE_ANGLE_HUMAN;
-        }});
-    });
-
-    radioFovWide.addEventListener('click', function() {
-        TweenLite.to(camera, 1, {fov: FOV_WIDE, onUpdate: function() {
-            camera.updateProjectionMatrix();
-        }, onComplete: function() {
-            rotateAngle = ROTATE_ANGLE_WIDE;
-        }});
-    });
-
-    radioFlyTo0.addEventListener('click', function() {
-        flyTo(new THREE.Vector3(0, 0, 0));
-    });
-
-    radioFlyTo5.addEventListener('click', function() {
-        flyTo(new THREE.Vector3(0, 0, 5));
-    });
-
-    radioFlyTo10.addEventListener('click', function() {
-        flyTo(new THREE.Vector3(0, 0, 10));
-    });
+  
+    
+    
+    
 }
 
 function createGeometry(data, name) {
-    var geometry = new THREE.Geometry(),
-        size = 2,
+
+
+
+   var geometry = new THREE.Geometry(),
+        size = 0.016,
         material,
+		sprite,sprite1,
         particles,
+		parameters,
         color;
-
-
 		
-    for (var i = 0; i < data.length; i++) {
-        var vertex = new THREE.Vector3();
+		
+
+
+    var textureLoader = new THREE.TextureLoader();
+
+    sprite1 = textureLoader.load( "src/images/flare16.jpg" );
+var array = new Float32Array(data.length * 3);
+var colors = new Float32Array(data.length * 3);
+    for (var i = 0,i3=0; i < data.length; i++,i3+=3) {
+        
+		var vertex = new THREE.Vector3();
+		
         vertex.x = data[i].X;
         vertex.y = data[i].Y;
         vertex.z = data[i].Z;
+		
+		array[i3+0] = vertex.x;
+		array[i3+1] = vertex.y;
+		array[i3+2] = vertex.z;
+		
         geometry.vertices.push( vertex );
 
+	
         color = calculateColor(data[i]);
+	    colors[i3+0] = color.r;
+		colors[i3+1] = color.y;
+		colors[i3+2] = color.z;
         geometry.colors.push( color );
     }
+	
+	//console.log(array);
+	//console.log(colors);
+	
+// Check browser support
+if (typeof(Storage) !== "undefined") {
+    // Store
+  
+    var visibleArray = localStorage.getItem("visibleArray");
+	if(visibleArray == null)
+	  localStorage.setItem("visibleArray", array);
+	
+} else {
+     console.log("Sorry, your browser does not support Web Storage...");
+}
 
 
-    material = new THREE.PointsMaterial({
-        size: size,
-        sizeAttenuation: false,
-        vertexColors: THREE.VertexColors
-    });
-    particles = new THREE.Points( geometry, material );
-    particles.name = name;
-    scene.add( particles );
+	material = new THREE.PointsMaterial( { size: size, sizeAttenuation: true, map: sprite1, depthTest: false, blending: THREE.AdditiveBlending, transparent : true,  vertexColors: THREE.VertexColors } );
+	
+   
+    particles = new THREE.Points( geometry, material);
+	 particles.name = name;
+	scene.add( particles );
 
+				
     if (name === 'visible') {
         visibles = data;
         visibleParticles = particles;
@@ -341,20 +458,30 @@ function createGeometry(data, name) {
 
 function animate() {
 
+
+var delta = clock.getDelta();
     requestAnimationFrame( animate );
-
-    controls.update();
-
+ 
+    controls.update(delta);
+	stats.update();
+  // cameraControls.update(delta);
     render();
 }
 
 function render() {
-    if (checkRotate.checked) {
+    if (checkRotate) {
         visibleParticles.rotateOnAxis(ROTATE_AXIS, rotateAngle);
         clusterParticles.rotateOnAxis(ROTATE_AXIS, rotateAngle);
     }
+  /*var clock = new THREE.Clock(),
+       delta = clock.getDelta(); 
 
-    effect.render(scene, camera);
+   earthMesh.rotation.y += 1* delta;
+    */
+	effect.render(scene, camera);
+	
+	
+	
 }
 
 /**
@@ -406,7 +533,8 @@ function flyTo(location) {
 
     visibleParticles.geometry.colorsNeedUpdate = true;
     clusterParticles.geometry.colorsNeedUpdate = true;
-
+    //visibleParticles.material.needsUpdate = true;
+	//clusterParticles.material.needsUpdate = true;
     // set new rotation origin
     visibleParticles.position.set(location.x, location.y, location.z);
     /*visibleParticles.geometry.translate(oldPosition.x - location.x,
