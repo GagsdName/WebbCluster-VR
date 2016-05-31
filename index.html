@@ -34,7 +34,6 @@
 
 <script src="src/js/stats.js"></script>
 <script src="src/js/DAT.gui.js"></script>
-<script src = "src/js/data.js" ></script>
 
 <script>
 /*
@@ -176,6 +175,24 @@ init();
 
 animate();
 
+Papa.parse('src/data/movie.csv', {
+    download: true,
+    header: true,
+    dynamicTyping: true,
+    complete: function (results) {
+	
+        createGeometry(results.data, 'cluster');
+    }
+});
+
+Papa.parse('src/data/visible.csv', {
+    download: true,
+    header: true,
+    dynamicTyping: true,
+    complete: function (results) {
+        createGeometry(results.data, 'visible');
+    }
+});
 
 
 
