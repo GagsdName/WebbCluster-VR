@@ -13,7 +13,7 @@
 
 </head>
 
-<body onload="foo()">
+<body>
 	
          
 <!--[if lt IE 10]>
@@ -148,6 +148,8 @@ var scene,
 	gui,
 	earthMesh,
 	params,
+	platform,
+	skybox,
 	manager,
 	uniforms,
     cameraControls,
@@ -202,28 +204,26 @@ function init() {
     camera = new THREE.PerspectiveCamera(FOV_WIDE,
                                          window.innerWidth / window.innerHeight,
                                          0.1,
-                                         10000000);
+                                         20000);
 
     rotateAngle = ROTATE_ANGLE_HUMAN;
-
- 
-    //camera.setLens(300);
-    camera.position.z = 320;
+  
+	//camera.position.set(0,0,10000);
+ 	//camera.position.y = 200;
+    //camera.setLens(12);
+  
    
     renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize( window.innerWidth, window.innerHeight );
-
+    renderer.sortObjects = false;
 
      // Apply VR stereo rendering to renderer.
     effect = new THREE.VREffect(renderer);
 	//alert(effect);
     effect.setSize(window.innerWidth, window.innerHeight);	
    
-   // effect = new THREE.StereoEffect( renderer );
-	//alert(effect);
-	//effect.setSize( window.innerWidth, window.innerHeight );
-	
+   
 	
 	// Create a VR manager helper to enter and exit VR mode.
     params = {
@@ -244,13 +244,13 @@ function init() {
 	stats.domElement.style.zIndex = 100;
 	  document.body.appendChild( stats.domElement );
 	  
-/////////
-	// GUI //
-	/////////
+     //////////////////////
+	// GUI Toggle-Panel //
+	/////////////////////
 	
 	gui = new dat.GUI();
 	parameters = 
-	{ se: true, cs: true, mv: true,rot: false, hfov: false, wfov: true, zz: true, z5: false, z10: false,  color: "#ffff00" };
+	{ se: true, cs: true, mv: true, plt: true, rot: false, hfov: false, wfov: true, zz: true, z5: false, z10: false,  color: "#ffff00" };
 	
 
 	 
@@ -279,7 +279,13 @@ function init() {
 	earthMesh.visible = value;
 	
 	});
-    folder1.open();
+	
+	var pltGUI = folder1.add( parameters, 'plt' ).name("Platform").listen();
+	pltGUI.onChange( function(value) { 
+	platform.visible = value;
+	
+	});
+ 
 	
 	var folder2 = gui.addFolder('Toggle Field of View');
 	var hfovGUI = folder2.add( parameters, 'hfov' ).name("Human View").listen();
@@ -307,7 +313,7 @@ function init() {
 	
 	});
 	
-	folder2.open();
+
 
 	
 	
@@ -336,20 +342,14 @@ function init() {
 	  flyTo(new THREE.Vector3(0, 0, 10));
 	});
 	
-	folder3.open();
-	// cameraControls = new THREE.TrackballControls(camera, renderer.domElement);
-    // cameraControls.target.set(0, 0, 0);
-				
-    /*var freefly = document.getElementbyId('freefly');
-	alert(freefly);
-	if(freefly.checked)
-	{controls.standing = true; controls.update();}*/
+
+	
 
 	
     var textureLoader = new THREE.TextureLoader();
 
     var earth = textureLoader.load( 'src/images/earthmap1k.jpg' );
-	//var spec = textureLoader.load('src/images/earthspec1k.jpg');
+
 	earthMesh = new THREE.Mesh(
 					new THREE.SphereBufferGeometry(0.5, 32, 32 ),
 					new THREE.MeshBasicMaterial( {  map: earth, blending: THREE.AdditiveBlending} )
@@ -359,8 +359,69 @@ function init() {
     scene.add( earthMesh );
 	
 
+/*var tempGeometry   = new THREE.SphereGeometry(32, 32, 32);
+var tempMaterial  = new THREE.MeshPhongMaterial({color:0x000000, wireframe: true});
+var tempMesh = new THREE.Mesh(tempGeometry, tempMaterial);
+scene.add(tempMesh);
+*/
+
+    var geometry = new THREE.SphereGeometry(500,60,40);
+
+	var material = new THREE.MeshBasicMaterial();
+    material.map = THREE.ImageUtils.loadTexture('src/images/360.jpg');
+    material.side = THREE.BackSide;
 
 
+   skybox = new THREE.Mesh(geometry, material);
+    scene.add(skybox);
+	
+	
+		function makePlatform( jsonUrl, textureUrl, textureQuality ) {
+				var placeholder = new THREE.Object3D();
+
+				var texture = new THREE.TextureLoader().load( textureUrl );
+				texture.minFilter = THREE.LinearFilter;
+				texture.anisotropy = textureQuality;
+
+				var loader = new THREE.JSONLoader();
+				loader.load( jsonUrl, function( geometry ) {
+
+			    geometry.computeFaceNormals();
+                //geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, 60) );
+			    platform = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ map : texture }) );
+                    //platform.position = new THREE.Vector3(0, -30, 0)
+					//platform.material.polygonOffset = true;
+                    //platform.material.polygonOffsetFactor = -0.1;
+					//platform.position = new THREE.Vector3(0,0,1000) ; //see position is Vector3()
+               //platform.position.set(0, 0, 2);
+			   //platform.translateZ();
+               //clusterParticles.geometry.translate(oldPosition.x - location.x,
+                                        //oldPosition.y - location.y,
+                                        //oldPosition.z - location.z);
+          
+					
+					platform.name = "platform";
+
+					placeholder.add( platform );
+					
+					//placeholder.position = new THREE.Vector3(0,0,-10000);
+				});
+
+				return placeholder;
+			}
+	
+	
+	
+	
+	scene.add( makePlatform(
+				'src/models/platform/platform.json',
+				'src/models/platform/platform.jpg',
+				renderer.getMaxAnisotropy()
+			));
+		
+	
+	
+	
     document.body.appendChild( renderer.domElement );
 
 	// Our preferred controls via DeviceOrientation
@@ -410,22 +471,34 @@ function createGeometry(data, name) {
 		parameters,
         color;
 		
-		
-
-
     var textureLoader = new THREE.TextureLoader();
 
     sprite1 = textureLoader.load( "src/images/flare16.jpg" );
-var array = new Float32Array(data.length * 3);
-var colors = new Float32Array(data.length * 3);
+sprite1.minFilter = THREE.LinearFilter;
+	    sprite1.anisotropy = renderer.getMaxAnisotropy;
+		
+    var array = new Float32Array(data.length * 3);
+    var colors = new Float32Array(data.length * 3);
     for (var i = 0,i3=0; i < data.length; i++,i3+=3) {
         
 		var vertex = new THREE.Vector3();
 		
-        vertex.x = data[i].X;
-        vertex.y = data[i].Y;
-        vertex.z = data[i].Z;
+	
 		
+    
+		vertex.x = data[i].X;
+		vertex.y = data[i].Y;
+	
+      	vertex.z = data[i].Z;
+	    
+	    
+	/*	  if (name == "cluster")
+	{
+	    vertex.multiplyScalar(6000);
+    } 		
+	*/
+	
+	
 		array[i3+0] = vertex.x;
 		array[i3+1] = vertex.y;
 		array[i3+2] = vertex.z;
@@ -444,23 +517,24 @@ var colors = new Float32Array(data.length * 3);
 	//console.log(colors);
 	
 // Check browser support
-if (typeof(Storage) !== "undefined") {
+    if (typeof(Storage) !== "undefined") {
     // Store
   
     var visibleArray = localStorage.getItem("visibleArray");
 	if(visibleArray == null)
 	  localStorage.setItem("visibleArray", array);
 	
-} else {
+    } else {
      console.log("Sorry, your browser does not support Web Storage...");
-}
+    }
 
 
 	material = new THREE.PointsMaterial( { size: size, sizeAttenuation: true, map: sprite1, depthTest: false, blending: THREE.AdditiveBlending, transparent : true,  vertexColors: THREE.VertexColors } );
 	
-   
     particles = new THREE.Points( geometry, material);
 	 particles.name = name;
+	//particles.scale.set(6,6,6);
+	//particles.translateZ(2);
 	scene.add( particles );
 
 				
@@ -481,15 +555,18 @@ var delta = clock.getDelta();
  
     controls.update(delta);
 	stats.update();
-  // cameraControls.update(delta);
-    render();
+   // camera.updateProjectionMatrix();   
+   render();
 }
 
 function render() {
     if (checkRotate) {
         visibleParticles.rotateOnAxis(ROTATE_AXIS, rotateAngle);
         clusterParticles.rotateOnAxis(ROTATE_AXIS, rotateAngle);
+	   //platform.rotateOnAxis(new THREE.Vector3(0, 1, 0), rotateAngle/2);
+		
     }
+
   /*var clock = new THREE.Clock(),
        delta = clock.getDelta(); 
 
@@ -539,6 +616,7 @@ function flyTo(location) {
     var oldPosition = camera.position;
     camera.position.set(location.x, location.y, location.z);
 
+	
     // calculate new m and colors
     /*for (var i = 0, l = visibleParticles.geometry.colors.length; i < l; i++) {
         visibleParticles.geometry.colors[i] = calculateColor(visibles[i]);
