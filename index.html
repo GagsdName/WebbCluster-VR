@@ -116,9 +116,9 @@ WebVRConfig = {
 				gl_PointSize = size * ( 300.0 / -mvPosition.z );
 				gl_Position = projectionMatrix * mvPosition;
 			}
-		</script>
+</script>
 
-		<script type="x-shader/x-fragment" id="fragmentshader">
+<script type="x-shader/x-fragment" id="fragmentshader">
 			uniform vec3 color;
 			uniform sampler2D texture;
 			varying vec3 vColor;
@@ -126,7 +126,7 @@ WebVRConfig = {
 				gl_FragColor = vec4( color * vColor, 1.0 );
 				gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
 			}
-		</script>
+</script>
 <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
  <script>
 (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
@@ -208,15 +208,15 @@ function init() {
 
     rotateAngle = ROTATE_ANGLE_HUMAN;
   
-	//camera.position.set(0,0,10000);
- 	//camera.position.y = 200;
+	//camera.position.set(0,6,0);
+ 	//camera.position.y = 200000;
     //camera.setLens(12);
   
    
     renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.sortObjects = false;
+    renderer.sortObjects = true;
 
      // Apply VR stereo rendering to renderer.
     effect = new THREE.VREffect(renderer);
@@ -236,7 +236,7 @@ function init() {
 	
 	// Apply VR headset positional data to camera.
     controls = new THREE.VRControls(camera);
-	controls.standing = true;
+	//controls.standing = true;
 	
     stats = new Stats();
 	stats.domElement.style.position = 'absolute';
@@ -346,17 +346,7 @@ function init() {
 	
 
 	
-    var textureLoader = new THREE.TextureLoader();
-
-    var earth = textureLoader.load( 'src/images/earthmap1k.jpg' );
-
-	earthMesh = new THREE.Mesh(
-					new THREE.SphereBufferGeometry(0.5, 32, 32 ),
-					new THREE.MeshBasicMaterial( {  map: earth, blending: THREE.AdditiveBlending} )
-				);
-
-	
-    scene.add( earthMesh );
+ 
 	
 
 /*var tempGeometry   = new THREE.SphereGeometry(32, 32, 32);
@@ -371,6 +361,17 @@ scene.add(tempMesh);
     material.map = THREE.ImageUtils.loadTexture('src/images/360.jpg');
     material.side = THREE.BackSide;
 
+	var textureLoader = new THREE.TextureLoader();
+
+    var earth = textureLoader.load( 'src/images/earthmap1k.jpg' );
+
+	earthMesh = new THREE.Mesh(
+					new THREE.SphereBufferGeometry(0.5, 32, 32 ),
+					new THREE.MeshBasicMaterial( {  map: earth, blending: THREE.AdditiveBlending} )
+				);
+
+	earthMesh.position.set(0, -2, 0);
+    scene.add( earthMesh );
 
    skybox = new THREE.Mesh(geometry, material);
     scene.add(skybox);
@@ -389,11 +390,12 @@ scene.add(tempMesh);
 			    geometry.computeFaceNormals();
                 //geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, 60) );
 			    platform = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ map : texture }) );
+				//platform.renderOrder = 100;
                     //platform.position = new THREE.Vector3(0, -30, 0)
 					//platform.material.polygonOffset = true;
                     //platform.material.polygonOffsetFactor = -0.1;
 					//platform.position = new THREE.Vector3(0,0,1000) ; //see position is Vector3()
-               //platform.position.set(0, 0, 2);
+               platform.position.set(0, -2, 0);
 			   //platform.translateZ();
                //clusterParticles.geometry.translate(oldPosition.x - location.x,
                                         //oldPosition.y - location.y,
@@ -423,6 +425,8 @@ scene.add(tempMesh);
 	
 	
     document.body.appendChild( renderer.domElement );
+	
+	   
 
 	// Our preferred controls via DeviceOrientation
         function setOrientationControls(e) {
@@ -444,13 +448,13 @@ scene.add(tempMesh);
     /*colorScale = chroma.scale(['white', 'gainsboro', 'black'])
         .domain([-9, -1, 6.5]);*/
 
-    colorScaleRed = chroma.scale(['lightyellow', 'peachpuff', 'black'])
+    colorScaleRed = chroma.scale(['lightyellow', 'peachpuff', 'white'])
         .domain([-9, -1, 6.5]);
 
-    colorScaleWhite = chroma.scale(['white', 'gainsboro', 'black'])
+    colorScaleWhite = chroma.scale(['white', 'gainsboro', 'white'])
         .domain([-9, -1, 6.5]);
 
-    colorScaleBlue = chroma.scale(['lightcyan', 'lightsteelblue', 'black'])
+    colorScaleBlue = chroma.scale(['lightcyan', 'lightsteelblue', 'white'])
         .domain([-9, -1, 6.5]);
 
   
@@ -464,18 +468,19 @@ function createGeometry(data, name) {
 
 
    var geometry = new THREE.Geometry(),
-        size = 0.016,
+        size = 0.3,
         material,
 		sprite,sprite1,
         particles,
 		parameters,
         color;
 		
-    var textureLoader = new THREE.TextureLoader();
+	
+   var textureLoader = new THREE.TextureLoader();
 
-    sprite1 = textureLoader.load( "src/images/flare16.jpg" );
-sprite1.minFilter = THREE.LinearFilter;
-	    sprite1.anisotropy = renderer.getMaxAnisotropy;
+   sprite1 = textureLoader.load( "src/images/circle_white.png" );
+   sprite1.minFilter = THREE.LinearFilter;
+   sprite1.anisotropy = renderer.getMaxAnisotropy;
 		
     var array = new Float32Array(data.length * 3);
     var colors = new Float32Array(data.length * 3);
@@ -486,17 +491,17 @@ sprite1.minFilter = THREE.LinearFilter;
 	
 		
     
-		vertex.x = data[i].X;
-		vertex.y = data[i].Y;
+		vertex.x = data[i].X * 500;
+		vertex.y = data[i].Y * 500 ;
 	
-      	vertex.z = data[i].Z;
+      	vertex.z = data[i].Z * 500;
 	    
-	    
-	/*	  if (name == "cluster")
+	    /*
+	  if (name == "cluster")
 	{
-	    vertex.multiplyScalar(6000);
-    } 		
-	*/
+	    vertex.multiplyScalar();
+    } 	*/	
+	
 	
 	
 		array[i3+0] = vertex.x;
@@ -508,8 +513,8 @@ sprite1.minFilter = THREE.LinearFilter;
 	
         color = calculateColor(data[i]);
 	    colors[i3+0] = color.r;
-		colors[i3+1] = color.y;
-		colors[i3+2] = color.z;
+		colors[i3+1] = color.g;
+		colors[i3+2] = color.b;
         geometry.colors.push( color );
     }
 	
@@ -523,15 +528,18 @@ sprite1.minFilter = THREE.LinearFilter;
     var visibleArray = localStorage.getItem("visibleArray");
 	if(visibleArray == null)
 	  localStorage.setItem("visibleArray", array);
+	  
 	
     } else {
      console.log("Sorry, your browser does not support Web Storage...");
     }
 
 
-	material = new THREE.PointsMaterial( { size: size, sizeAttenuation: true, map: sprite1, depthTest: false, blending: THREE.AdditiveBlending, transparent : true,  vertexColors: THREE.VertexColors } );
+	material = new THREE.PointsMaterial( { size: size, map: sprite1, sizeAttenuation: false, depthTest: true, blending: THREE.AdditiveBlending, transparent : true,  vertexColors: THREE.VertexColors } );
 	
     particles = new THREE.Points( geometry, material);
+	//particles.renderOrder = 1000;
+	
 	 particles.name = name;
 	//particles.scale.set(6,6,6);
 	//particles.translateZ(2);
@@ -563,8 +571,7 @@ function render() {
     if (checkRotate) {
         visibleParticles.rotateOnAxis(ROTATE_AXIS, rotateAngle);
         clusterParticles.rotateOnAxis(ROTATE_AXIS, rotateAngle);
-	   //platform.rotateOnAxis(new THREE.Vector3(0, 1, 0), rotateAngle/2);
-		
+		 
     }
 
   /*var clock = new THREE.Clock(),
