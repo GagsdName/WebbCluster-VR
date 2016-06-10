@@ -19,7 +19,13 @@
 <!--[if lt IE 10]>
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
+<div id="progress">
+			<span id="message">Loading ...</span>
 
+			<center>
+				<div id="progressbar" class="shadow"><div id="bar" class="shadow"></div></div>
+			</center>
+		</div>
 
 
 </body>
@@ -158,6 +164,7 @@ var scene,
     colorScaleWhite,
     colorScaleBlue,
     controls,
+	loadCube,
     visibles,
     visibleParticles,
     clusters,
@@ -168,7 +175,11 @@ var scene,
     ROTATE_ANGLE_HUMAN = 0.001,
     ROTATE_ANGLE_WIDE = 0.003,
     ROTATE_AXIS = new THREE.Vector3(1, 0, 0),
-    rotateAngle;
+    rotateAngle,
+	complete = false,
+	total,
+	loaded,raycaster,crosshair,
+    bar = 100;
 	
 
 var clock = new THREE.Clock();
@@ -176,7 +187,7 @@ var clock = new THREE.Clock();
 init();
 
 animate();
-
+total =0, loaded =0;
 Papa.parse('src/data/movie.csv', {
     download: true,
     header: true,
@@ -197,6 +208,17 @@ Papa.parse('src/data/visible.csv', {
 });
 
 
+	
+	
+ function loadingFinished( ) {
+	
+	document.getElementById( "message" ).style.display = "none";
+	document.getElementById( "progressbar" ).style.display = "none";
+	document.getElementById( "progress" ).style.display = "none";
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+
+}
 
 function init() {
     scene = new THREE.Scene();
@@ -223,7 +245,17 @@ function init() {
 	//alert(effect);
     effect.setSize(window.innerWidth, window.innerHeight);	
    
-   
+  /* raycaster = new THREE.Raycaster();
+	raycaster.setFromCamera( { x: 0, y: 0 }, camera );
+*/
+
+
+
+document.getElementById( "progress" ).style.display = "block";
+			
+			
+			
+				
 	
 	// Create a VR manager helper to enter and exit VR mode.
     params = {
@@ -250,7 +282,7 @@ function init() {
 	
 	gui = new dat.GUI();
 	parameters = 
-	{ se: true, cs: true, mv: true, plt: true, rot: false, hfov: false, wfov: true, zz: true, z5: false, z10: false,  color: "#ffff00" };
+	{ se: true, cs: true, mv: false, plt: false, rot: false, hfov: false, wfov: true, zz: true, z5: false, z10: false,  color: "#ffff00" };
 	
 
 	 
@@ -274,18 +306,18 @@ function init() {
 	
 	});
 	
-	var mvGUI = folder1.add( parameters, 'mv' ).name("Earth").listen();
+	/*var mvGUI = folder1.add( parameters, 'mv' ).name("Earth").listen();
 	mvGUI.onChange( function(value) { 
 	earthMesh.visible = value;
 	
 	});
-	
-	var pltGUI = folder1.add( parameters, 'plt' ).name("Platform").listen();
+	*/
+	/*var pltGUI = folder1.add( parameters, 'plt' ).name("Platform").listen();
 	pltGUI.onChange( function(value) { 
 	platform.visible = value;
 	
 	});
- 
+ */
 	
 	var folder2 = gui.addFolder('Toggle Field of View');
 	var hfovGUI = folder2.add( parameters, 'hfov' ).name("Human View").listen();
@@ -343,7 +375,7 @@ function init() {
 	});
 	
 
-	
+	//scene.add(gui);
 
 	
  
@@ -358,9 +390,18 @@ scene.add(tempMesh);
     var geometry = new THREE.SphereGeometry(500,60,40);
 
 	var material = new THREE.MeshBasicMaterial();
-    material.map = THREE.ImageUtils.loadTexture('src/images/360.jpg');
+    material.map = THREE.ImageUtils.loadTexture('src/images/360-2.jpg');
     material.side = THREE.BackSide;
+   skybox = new THREE.Mesh(geometry, material);
+    scene.add(skybox);
+skybox.visible = true;
+	
 
+var helper = new THREE.GridHelper( 30, 10, 0x0000ff,  0x0000ff );
+				helper.position.y = - 50;
+				scene.add( helper );
+
+			
 	var textureLoader = new THREE.TextureLoader();
 
     var earth = textureLoader.load( 'src/images/earthmap1k.jpg' );
@@ -370,14 +411,13 @@ scene.add(tempMesh);
 					new THREE.MeshBasicMaterial( {  map: earth, blending: THREE.AdditiveBlending} )
 				);
 
-	earthMesh.position.set(0, -2, 0);
-    scene.add( earthMesh );
+	earthMesh.position.set(0, 2, 0);
+   // scene.add( earthMesh );
+    earthMesh.visible=false;
 
-   skybox = new THREE.Mesh(geometry, material);
-    scene.add(skybox);
+
 	
-	
-		function makePlatform( jsonUrl, textureUrl, textureQuality ) {
+	function makePlatform( jsonUrl, textureUrl, textureQuality ) {
 				var placeholder = new THREE.Object3D();
 
 				var texture = new THREE.TextureLoader().load( textureUrl );
@@ -405,7 +445,7 @@ scene.add(tempMesh);
 					platform.name = "platform";
 
 					placeholder.add( platform );
-					
+				    platform.visible = false;
 					//placeholder.position = new THREE.Vector3(0,0,-10000);
 				});
 
@@ -413,15 +453,30 @@ scene.add(tempMesh);
 			}
 	
 	
-	
-	
-	scene.add( makePlatform(
+/*scene.add( makePlatform(
 				'src/models/platform/platform.json',
 				'src/models/platform/platform.jpg',
 				renderer.getMaxAnisotropy()
 			));
+
+  */ 	 
+	/*
+crosshair = new THREE.Mesh(
+					new THREE.RingGeometry( 0.02, 0.04, 32 ),
+					new THREE.MeshBasicMaterial( {
+						color: 0xffffff,
+						opacity: 4,
+						
+					} )
+				);
+crosshair.position.z = -5;
+camera.add( crosshair );
+	*/
+	
+	
 		
 	
+
 	
 	
     document.body.appendChild( renderer.domElement );
@@ -448,19 +503,29 @@ scene.add(tempMesh);
     /*colorScale = chroma.scale(['white', 'gainsboro', 'black'])
         .domain([-9, -1, 6.5]);*/
 
-    colorScaleRed = chroma.scale(['lightyellow', 'peachpuff', 'white'])
+    colorScaleRed = chroma.scale(['lightyellow', 'peachpuff', 'black'])
         .domain([-9, -1, 6.5]);
 
-    colorScaleWhite = chroma.scale(['white', 'gainsboro', 'white'])
+    colorScaleWhite = chroma.scale(['white', 'gainsboro', 'black'])
         .domain([-9, -1, 6.5]);
 
-    colorScaleBlue = chroma.scale(['lightcyan', 'lightsteelblue', 'white'])
+    colorScaleBlue = chroma.scale(['lightcyan', 'lightsteelblue', 'black'])
         .domain([-9, -1, 6.5]);
 
   
+    window.addEventListener('resize', onWindowResize, false);
+	
     
     
-    
+}
+
+function onWindowResize()
+{
+
+    camera.aspect = window.innerWidth/window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize(window.innerWidth, window.innerHeight);
+
 }
 
 function createGeometry(data, name) {
@@ -468,13 +533,25 @@ function createGeometry(data, name) {
 
 
    var geometry = new THREE.Geometry(),
-        size = 0.3,
+        size = 3.5,
         material,
 		sprite,sprite1,
         particles,
 		parameters,
         color;
 		
+   /* var shaderMaterial = new THREE.ShaderMaterial( {
+				uniforms:       uniforms,
+				vertexShader:   document.getElementById( 'vertexshader' ).textContent,
+				fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
+				blending:       THREE.AdditiveBlending,
+				depthTest:      false,
+				transparent:    true
+			});
+
+	*/
+	//alert(shaderMaterial);
+	
 	
    var textureLoader = new THREE.TextureLoader();
 
@@ -484,18 +561,29 @@ function createGeometry(data, name) {
 		
     var array = new Float32Array(data.length * 3);
     var colors = new Float32Array(data.length * 3);
+	
+	if (name == "cluster")total = data.length;
     for (var i = 0,i3=0; i < data.length; i++,i3+=3) {
         
 		var vertex = new THREE.Vector3();
 		
 	
 		
-    
-		vertex.x = data[i].X * 500;
-		vertex.y = data[i].Y * 500 ;
+        if(name == "cluster"){   
+		vertex.x = data[i].X ;
+		vertex.y = data[i].Y ;
 	
-      	vertex.z = data[i].Z * 500;
-	    
+      	vertex.z = data[i].Z ;
+		loaded = loaded+1;
+	    }
+		else{
+		vertex.x = data[i].X ;
+		vertex.y = data[i].Y ; 
+	
+      	vertex.z = data[i].Z ;
+		
+		
+		}
 	    /*
 	  if (name == "cluster")
 	{
@@ -516,8 +604,13 @@ function createGeometry(data, name) {
 		colors[i3+1] = color.g;
 		colors[i3+2] = color.b;
         geometry.colors.push( color );
+		
     }
 	
+	if(name == "cluster") {
+	if(loaded == total) {complete = true;loadingFinished();}
+	}
+	//alert(complete);
 	//console.log(array);
 	//console.log(colors);
 	
@@ -535,7 +628,7 @@ function createGeometry(data, name) {
     }
 
 
-	material = new THREE.PointsMaterial( { size: size, map: sprite1, sizeAttenuation: false, depthTest: true, blending: THREE.AdditiveBlending, transparent : true,  vertexColors: THREE.VertexColors } );
+	material = new THREE.PointsMaterial( { size: size,map: sprite1,sizeAttenuation:false, depthTest: true, blending: THREE.AdditiveBlending, transparent : true,  vertexColors: THREE.VertexColors } );
 	
     particles = new THREE.Points( geometry, material);
 	//particles.renderOrder = 1000;
@@ -559,11 +652,20 @@ function animate() {
 
 
 var delta = clock.getDelta();
+
     requestAnimationFrame( animate );
- 
+ 	  
     controls.update(delta);
 	stats.update();
-   // camera.updateProjectionMatrix();   
+    if(complete == false){
+	bar = bar + 4;
+	document.getElementById( "bar" ).style.width = bar + "px";
+
+	}
+	
+	
+	
+ // camera.updateProjectionMatrix();   
    render();
 }
 
@@ -621,7 +723,7 @@ function calculateColor(star) {
 function flyTo(location) {
     // fly to new position
     var oldPosition = camera.position;
-    camera.position.set(location.x, location.y, location.z);
+    camera.position.set(location.x , location.y, location.z);
 
 	
     // calculate new m and colors
