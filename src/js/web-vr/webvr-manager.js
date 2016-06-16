@@ -69,6 +69,7 @@ function ButtonManager() {
   fsButton.addEventListener('click', this.createClickHandler_('fs'));
   document.body.appendChild(fsButton);
   this.fsButton = fsButton;
+ 
 
   // Make the VR button.
   var vrButton = this.createButton();
@@ -105,6 +106,18 @@ function ButtonManager() {
   document.body.appendChild(settingsButton);
   this.settingsButton = settingsButton;
 
+  // Make the starToggle button.
+  var starToggleButton = this.createButton();
+  starToggleButton.title = 'Toggle Cluster/Earth Visible Stars';
+  var s = starToggleButton.style;
+  s.bottom = 0;
+  s.right = '10px';
+  starToggleButton.src = this.ICONS.cardboard;
+  starToggleButton.addEventListener('click', this.createClickHandler_('starToggle'));
+  document.body.appendChild(starToggleButton);
+  this.starToggleButton = starToggleButton;
+  console.log(starToggleButton);
+  
   this.isVisible = true;
 
   this.aligner = new Aligner();
@@ -153,7 +166,8 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
   switch (mode) {
     case Modes.NORMAL:
       this.fsButton.style.display = 'block';
-      this.fsButton.src = this.ICONS.fullscreen;
+      this.fsButton.src = this.ICONS.fullscreen;	  
+	  this.starToggleButton.style.display = 'block';
       this.vrButton.style.display = (isVRCompatible ? 'block' : 'none');
       this.backButton.style.display = 'none';
       this.settingsButton.style.display = 'none';
@@ -193,6 +207,8 @@ ButtonManager.prototype.setVisibility = function(isVisible) {
   this.fsButton.style.display = isVisible ? 'block' : 'none';
   this.vrButton.style.display = isVisible ? 'block' : 'none';
   this.backButton.style.display = isVisible ? 'block' : 'none';
+  this.starToggleButton.style.display = isVisible ? 'block' : 'none';
+    console.log("gagan",this.starToggleButton);
 };
 
 ButtonManager.prototype.createClickHandler_ = function(eventName) {
@@ -211,7 +227,8 @@ ButtonManager.prototype.loadIcons_ = function() {
   this.ICONS.exitFullscreen = Util.base64('image/svg+xml', 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRkZGRiI+CiAgICA8cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+CiAgICA8cGF0aCBkPSJNNSAxNmgzdjNoMnYtNUg1djJ6bTMtOEg1djJoNVY1SDh2M3ptNiAxMWgydi0zaDN2LTJoLTV2NXptMi0xMVY1aC0ydjVoNVY4aC0zeiIvPgo8L3N2Zz4K');
   this.ICONS.back = Util.base64('image/svg+xml', 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRkZGRiI+CiAgICA8cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+CiAgICA8cGF0aCBkPSJNMjAgMTFINy44M2w1LjU5LTUuNTlMMTIgNGwtOCA4IDggOCAxLjQxLTEuNDFMNy44MyAxM0gyMHYtMnoiLz4KPC9zdmc+Cg==');
   this.ICONS.settings = Util.base64('image/svg+xml', 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRkZGRiI+CiAgICA8cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+CiAgICA8cGF0aCBkPSJNMTkuNDMgMTIuOThjLjA0LS4zMi4wNy0uNjQuMDctLjk4cy0uMDMtLjY2LS4wNy0uOThsMi4xMS0xLjY1Yy4xOS0uMTUuMjQtLjQyLjEyLS42NGwtMi0zLjQ2Yy0uMTItLjIyLS4zOS0uMy0uNjEtLjIybC0yLjQ5IDFjLS41Mi0uNC0xLjA4LS43My0xLjY5LS45OGwtLjM4LTIuNjVDMTQuNDYgMi4xOCAxNC4yNSAyIDE0IDJoLTRjLS4yNSAwLS40Ni4xOC0uNDkuNDJsLS4zOCAyLjY1Yy0uNjEuMjUtMS4xNy41OS0xLjY5Ljk4bC0yLjQ5LTFjLS4yMy0uMDktLjQ5IDAtLjYxLjIybC0yIDMuNDZjLS4xMy4yMi0uMDcuNDkuMTIuNjRsMi4xMSAxLjY1Yy0uMDQuMzItLjA3LjY1LS4wNy45OHMuMDMuNjYuMDcuOThsLTIuMTEgMS42NWMtLjE5LjE1LS4yNC40Mi0uMTIuNjRsMiAzLjQ2Yy4xMi4yMi4zOS4zLjYxLjIybDIuNDktMWMuNTIuNCAxLjA4LjczIDEuNjkuOThsLjM4IDIuNjVjLjAzLjI0LjI0LjQyLjQ5LjQyaDRjLjI1IDAgLjQ2LS4xOC40OS0uNDJsLjM4LTIuNjVjLjYxLS4yNSAxLjE3LS41OSAxLjY5LS45OGwyLjQ5IDFjLjIzLjA5LjQ5IDAgLjYxLS4yMmwyLTMuNDZjLjEyLS4yMi4wNy0uNDktLjEyLS42NGwtMi4xMS0xLjY1ek0xMiAxNS41Yy0xLjkzIDAtMy41LTEuNTctMy41LTMuNXMxLjU3LTMuNSAzLjUtMy41IDMuNSAxLjU3IDMuNSAzLjUtMS41NyAzLjUtMy41IDMuNXoiLz4KPC9zdmc+Cg==');
-};
+  this.ICONS.starToggle = Util.base64('image/svg+xml','PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTQuNjY0IDEzLjQzMmMtLjc1OS43NzEtMi41NzEuNzU1LTQuMDQyLS4wMzYtMS40NzUtLjc5Mi0yLjA0Ni0yLjA1OC0xLjI4Ni0yLjgyOS43NTktLjc3MSAyLjU2OC0uNzU1IDQuMDQzLjAzNyAxLjQ2OS43OTIgMi4wNDYgMi4wNTcgMS4yODUgMi44Mjh6bTQuNDMtNS42MzZjMS4xNTYgMCAzLjMyMy41NTggNC45MDYgMi4yMDQgMC0zLjkzOC01LjA2OS05LTExLjk5My05LTUuNjc4IDAtMTAuMDA3IDQuMDIyLTEwLjAwNyA4Ljg1OCAwIDIuNjE3LjkxMSA0LjY2NCAyLjkwNiA2LjM0Ni0xLjE1NiAwLTMuMzIzLS41NTgtNC45MDYtMi4yMDQgMCAzLjkzOCA1LjA2OSA5IDExLjk5MyA5IDUuNjc4IDAgMTAuMDA3LTQuMDIyIDEwLjAwNy04Ljg1OCAwLTEuOTktLjc1NS00LjUzMy0yLjkwNi02LjM0NnptLTcuMTAxIDEzLjIwNGMtMy4wMiAwLTUuODItMS4xMDEtNy43OC0yLjkyNCAyLjQwNS43OTIgNS45NzQgMS4xMTEgOC4wMjEtLjQ1OC00LjI2Ny0uODExLTguMjM0LTMuMzM5LTguMjM0LTcuNzY0IDAtMy43MDEgMy40MDUtNi44NTQgOC4wMDctNi44NTQgMy4wMiAwIDUuODIgMS4xMDEgNy43OCAyLjkyNC0yLjQwNS0uNzkyLTUuOTc0LTEuMTExLTguMDIxLjQ1OCA0LjI1Ny44MDkgOC4yMzQgMy40NTYgOC4yMzQgNy43NjQgMCAzLjcwMS0zLjQwNSA2Ljg1NC04LjAwNyA2Ljg1NHoiLz48L3N2Zz4=');
+  };
 
 module.exports = ButtonManager;
 
@@ -2677,7 +2694,8 @@ WebVRManager.prototype.setMode_ = function(mode) {
     console.error('Not changing modes, already in %s', mode);
     return;
   }
-  console.log('Mode change: %s => %s', this.mode, mode);
+  console.log('Mode change : %s => %s', this.mode, mode);
+  
   this.mode = mode;
   this.button.setMode(mode, this.isVRCompatible);
 

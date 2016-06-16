@@ -18,6 +18,11 @@ body {
     color: lightgray;
 }
 
+#controls{
+	top:0px;
+	right:0px;
+	position:absolute;
+}
 #progress {
 				color:white;
 				top:7em;
@@ -35,13 +40,13 @@ body {
 #progressbar {
 				text-align: center;
 				background: white;
-				width: 250px;
+				width: 200px;
 				height: 10px;
 			}
 
 #bar {
 				background:#d00;
-				width:50px;
+				width:30px;
 				height:10px;
 			}
 			

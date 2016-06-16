@@ -14,7 +14,7 @@
 </head>
 
 <body>
-	
+
          
 <!--[if lt IE 10]>
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
@@ -27,7 +27,9 @@
 			</center>
 		</div>
 
+<div id= "controls">
 
+</div>	  
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/1.1.1/chroma.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
@@ -49,7 +51,7 @@ WebVRConfig = {
   /**
    * webvr-polyfill configuration
    */
-
+  //CARDBOARD_UI_DISABLED: false,
   // Forces availability of VR mode.
   //FORCE_ENABLE_VR: true, // Default: false.
   // Complementary filter coefficient. 0 for accelerometer, 1 for gyro.
@@ -112,6 +114,9 @@ WebVRConfig = {
 <script src="node_modules/three/examples/js/materials/ShadowMaterial.js"></script>
 
 <script src="node_modules/three/examples/js/controls/TrackballControls.js"></script>
+<script src="src/js/reticulum.js"></script>
+
+
 <script type="x-shader/x-vertex" id="vertexshader">
 			attribute float size;
 			attribute vec3 customColor;
@@ -179,7 +184,8 @@ var scene,
 	complete = false,
 	total,
 	loaded,raycaster,crosshair,
-    bar = 100;
+    bar = 100,
+	loadFin = false;
 	
 
 var clock = new THREE.Clock();
@@ -211,7 +217,7 @@ Papa.parse('src/data/visible.csv', {
 	
 	
  function loadingFinished( ) {
-	
+	loadFin = true;
 	document.getElementById( "message" ).style.display = "none";
 	document.getElementById( "progressbar" ).style.display = "none";
 	document.getElementById( "progress" ).style.display = "none";
@@ -229,11 +235,45 @@ function init() {
                                          20000);
 
     rotateAngle = ROTATE_ANGLE_HUMAN;
+  // *******************************
+// --- Reticulum ---
+// initiate Reticulum so it loads up 
+Reticulum.init(camera, {
+	proximity: false,
+	clickevents: true,
+	reticle: {
+		visible: true,
+		restPoint: 1000, //Defines the reticle's resting point when no object has been targeted
+		color: 0xcc00cc,
+		innerRadius: 0.01,
+		outerRadius: 0.02,
+		hover: {
+			color: 0x00cccc,
+			innerRadius: 0.02,
+			outerRadius: 0.024,
+			speed: 5,
+			vibrate: 50 //Set to 0 or [] to disable
+		}
+	},
+	fuse: {
+		visible: false,
+		duration: 2.5,
+		color: 0x00fff6,
+		innerRadius: 0.045,
+		outerRadius: 0.06,
+		vibrate: 0, //Set to 0 or [] to disable
+		clickCancelFuse: false //If users clicks on targeted object fuse is canceled
+	}
+});
+
+//camera.position.set(0,0,5);
+// IMPORTANT add camera to cene if you want to see a reticle 
+scene.add(camera);
   
 	//camera.position.set(0,6,0);
  	//camera.position.y = 200000;
     //camera.setLens(12);
-  
+
    
     renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setPixelRatio(window.devicePixelRatio);
@@ -245,10 +285,7 @@ function init() {
 	//alert(effect);
     effect.setSize(window.innerWidth, window.innerHeight);	
    
-  /* raycaster = new THREE.Raycaster();
-	raycaster.setFromCamera( { x: 0, y: 0 }, camera );
-*/
-
+ 
 
 
 document.getElementById( "progress" ).style.display = "block";
@@ -264,8 +301,7 @@ document.getElementById( "progress" ).style.display = "block";
     };
 
 	 manager = new WebVRManager(renderer, effect, params);
-	//alert(manager);
-	
+
 	// Apply VR headset positional data to camera.
     controls = new THREE.VRControls(camera);
 	//controls.standing = true;
@@ -281,6 +317,8 @@ document.getElementById( "progress" ).style.display = "block";
 	/////////////////////
 	
 	gui = new dat.GUI();
+    document.getElementById('controls').appendChild(gui.domElement);
+	document.getElementById('controls').style.display = 'block';
 	parameters = 
 	{ se: true, cs: true, mv: false, plt: false, rot: false, hfov: false, wfov: true, zz: true, z5: false, z10: false,  color: "#ffff00" };
 	
@@ -375,17 +413,11 @@ document.getElementById( "progress" ).style.display = "block";
 	});
 	
 
-	//scene.add(gui);
 
 	
  
 	
 
-/*var tempGeometry   = new THREE.SphereGeometry(32, 32, 32);
-var tempMaterial  = new THREE.MeshPhongMaterial({color:0x000000, wireframe: true});
-var tempMesh = new THREE.Mesh(tempGeometry, tempMaterial);
-scene.add(tempMesh);
-*/
 
     var geometry = new THREE.SphereGeometry(500,60,40);
 
@@ -393,8 +425,10 @@ scene.add(tempMesh);
     material.map = THREE.ImageUtils.loadTexture('src/images/360-2.jpg');
     material.side = THREE.BackSide;
    skybox = new THREE.Mesh(geometry, material);
-    scene.add(skybox);
-skybox.visible = true;
+  //skybox.position.set(0,0,-400);
+   skybox.scale.set(6,6,6);
+   scene.add(skybox);
+   skybox.visible = true;
 	
 
 var helper = new THREE.GridHelper( 30, 10, 0x0000ff,  0x0000ff );
@@ -460,26 +494,9 @@ var helper = new THREE.GridHelper( 30, 10, 0x0000ff,  0x0000ff );
 			));
 
   */ 	 
-	/*
-crosshair = new THREE.Mesh(
-					new THREE.RingGeometry( 0.02, 0.04, 32 ),
-					new THREE.MeshBasicMaterial( {
-						color: 0xffffff,
-						opacity: 4,
-						
-					} )
-				);
-crosshair.position.z = -5;
-camera.add( crosshair );
-	*/
-	
-	
-		
-	
 
 	
-	
-    document.body.appendChild( renderer.domElement );
+	document.body.appendChild( renderer.domElement );
 	
 	   
 
@@ -514,7 +531,7 @@ camera.add( crosshair );
 
   
     window.addEventListener('resize', onWindowResize, false);
-	
+	window.addEventListener('orientationchange', onWindowResize, false);
     
     
 }
@@ -523,8 +540,20 @@ function onWindowResize()
 {
 
     camera.aspect = window.innerWidth/window.innerHeight;
+	//Incomplete fix for loading bar resize fix
+	/* if(loadFin == false)
+	{
+     
+	document.getElementById( "progressbar" ).style.width = camera.aspect/4 + "px";;
+	document.getElementById( "progressbar" ).style.height = camera.aspect/4 * 0.05  + "px";;
+	location.reload();
+	
+	}
+	*/
+    
 	camera.updateProjectionMatrix();
 	renderer.setSize(window.innerWidth, window.innerHeight);
+	
 
 }
 
@@ -533,7 +562,7 @@ function createGeometry(data, name) {
 
 
    var geometry = new THREE.Geometry(),
-        size = 3.5,
+        size = 2.5,
         material,
 		sprite,sprite1,
         particles,
@@ -658,19 +687,18 @@ var delta = clock.getDelta();
     controls.update(delta);
 	stats.update();
     if(complete == false){
+
 	bar = bar + 4;
 	document.getElementById( "bar" ).style.width = bar + "px";
 
 	}
 	
-	
-	
- // camera.updateProjectionMatrix();   
    render();
 }
 
 function render() {
     if (checkRotate) {
+	    skybox.rotateOnAxis(ROTATE_AXIS, rotateAngle);
         visibleParticles.rotateOnAxis(ROTATE_AXIS, rotateAngle);
         clusterParticles.rotateOnAxis(ROTATE_AXIS, rotateAngle);
 		 
@@ -723,9 +751,8 @@ function calculateColor(star) {
 function flyTo(location) {
     // fly to new position
     var oldPosition = camera.position;
-    camera.position.set(location.x , location.y, location.z);
+    camera.position.set(location.x, location.y, location.z);
 
-	
     // calculate new m and colors
     /*for (var i = 0, l = visibleParticles.geometry.colors.length; i < l; i++) {
         visibleParticles.geometry.colors[i] = calculateColor(visibles[i]);
@@ -737,15 +764,14 @@ function flyTo(location) {
 
     visibleParticles.geometry.colorsNeedUpdate = true;
     clusterParticles.geometry.colorsNeedUpdate = true;
-    //visibleParticles.material.needsUpdate = true;
-	//clusterParticles.material.needsUpdate = true;
+
     // set new rotation origin
     visibleParticles.position.set(location.x, location.y, location.z);
     /*visibleParticles.geometry.translate(oldPosition.x - location.x,
                                         oldPosition.y - location.y,
                                         oldPosition.z - location.z);*/
 
-    clusterParticles.position.set(location.x, location.y, location.z);
+    clusterParticles.position.set(location.x, location.y, oldPosition.z - location.z);
     clusterParticles.geometry.translate(oldPosition.x - location.x,
                                         oldPosition.y - location.y,
                                         oldPosition.z - location.z);
