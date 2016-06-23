@@ -41,8 +41,8 @@
 
 <script src="src/js/stats.js"></script>
 <script src="src/js/DAT.gui.js"></script>
-<script src="src/js/THREEx.KeyboardState.js"></script>
-
+<!--<script src="src/js/THREEx.KeyboardState.js"></script>
+-->
 
 <script>
 /*
@@ -116,7 +116,9 @@ WebVRConfig = {
 
 <script src="node_modules/three/examples/js/controls/TrackballControls.js"></script>
 <script src="src/js/reticulum.js"></script>
-
+<script src='src/js/threex.htmlmixer.js'></script>
+<script src='src/js/CSS3DRenderer.js'></script>
+<!--
 <script src="src/js/gentilis_bold.typeface.js"></script>
 <script src="src/js/gentilis_regular.typeface.js"></script>
 <script src="src/js/optimer_bold.typeface.js"></script>
@@ -127,7 +129,7 @@ WebVRConfig = {
 <script src="src/js/droid_sans_bold.typeface.js"></script>
 <script src="src/js/droid_serif_bold.typeface.js"></script>
 <script src="src/js/droid_serif_regular.typeface.js"></script>
-
+-->
 
 <script type="x-shader/x-vertex" id="vertexshader">
 			attribute float size;
@@ -198,8 +200,8 @@ var scene,
 	total,
 	loaded,raycaster,crosshair,
     bar = 100,
-	loadFin = false,
-	keyboard = new THREEx.KeyboardState();
+	loadFin = false;
+	//keyboard = new THREEx.KeyboardState();
 	
 
 var clock = new THREE.Clock();
@@ -207,7 +209,7 @@ var clock = new THREE.Clock();
 init();
 
 animate();
-total =0, loaded =0;
+total = 0, loaded = 0;
 Papa.parse('src/data/movie.csv', {
     download: true,
     header: true,
@@ -249,7 +251,8 @@ function init() {
                                          20000);
 
     rotateAngle = ROTATE_ANGLE_HUMAN;
-	 
+	var mixerContext= new THREEx.HtmlMixer.Context(renderer, scene, camera);
+	alert(mixerContext);
 // *******************************
 // --- Reticulum ---
 // initiate Reticulum so it loads up 
@@ -289,7 +292,7 @@ scene.add(camera);
     //camera.setLens(12);
 
    
-    renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer = new THREE.WebGLRenderer({antialias: true });
 	renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize( window.innerWidth, window.innerHeight );
     //renderer.sortObjects = true;
@@ -343,17 +346,26 @@ document.getElementById( "progress" ).style.display = "block";
 	var seGUI = folder1.add( parameters, 'se' ).name("Earth visible stars").listen();
 	seGUI.onChange( function(value) { 
 	 visibleParticles.visible = value;
-	
+		if (value == false)visibleToggle.material.color.setHex(0xd62d20);
+			
+			else visibleToggle.material.color.setHex(0x008744);
 	});
 	var csGUI = folder1.add( parameters, 'cs' ).name("Cluster stars").listen();
 	csGUI.onChange( function(value) { 
 	clusterParticles.visible = value;
-	
+		        
+			if (value == false)clusterToggle.material.color.setHex(0xd62d20);
+			
+			else clusterToggle.material.color.setHex(0x008744);
 	});
 	
     var rotGUI = folder1.add( parameters, 'rot' ).name("Rotate").listen();
 	rotGUI.onChange( function(value) { 
 	  checkRotate = value;
+	        
+			if (value == false)rotationToggle.material.color.setHex(0xd62d20);
+			
+			else rotationToggle.material.color.setHex(0x008744);
 
 	});
 	
@@ -381,7 +393,9 @@ document.getElementById( "progress" ).style.display = "block";
 	hfovGUI.onChange( function(value) { 
 	parameters.wfov = false;
 	parameters.hfov = true;
-	  TweenLite.to(camera, 1, {fov: FOV_HUMAN, onUpdate: function() {
+	fovToggle.material.color.setHex(0xd62d20);
+ 
+	TweenLite.to(camera, 1, {fov: FOV_HUMAN, onUpdate: function() {
             camera.updateProjectionMatrix();
         }, onComplete: function() {
             rotateAngle = ROTATE_ANGLE_HUMAN;
@@ -394,7 +408,9 @@ document.getElementById( "progress" ).style.display = "block";
 	
 	parameters.hfov = false;
 	parameters.wfov = true;
-	 TweenLite.to(camera, 1, {fov: FOV_WIDE, onUpdate: function() {
+	fovToggle.material.color.setHex(0x008744);
+	
+	TweenLite.to(camera, 1, {fov: FOV_WIDE, onUpdate: function() {
             camera.updateProjectionMatrix();
         }, onComplete: function() {
             rotateAngle = ROTATE_ANGLE_WIDE;
@@ -412,7 +428,10 @@ document.getElementById( "progress" ).style.display = "block";
 	  parameters.zz = true;
       parameters.z5 = false;
 	  parameters.z10 = false;
+	  	  positionToggle.material.color.setHex(0xb3cde0);
+
 	  flyTo(new THREE.Vector3(0, 0, 0));
+	  
 	});
 	
 	var z5 = folder3.add( parameters, 'z5' ).name("(0,0,5 pc)").listen();
@@ -420,6 +439,7 @@ document.getElementById( "progress" ).style.display = "block";
 	  parameters.zz = false;
       parameters.z5 = true;
 	  parameters.z10 = false;
+	 	  positionToggle.material.color.setHex(0x6497b1);
 	  flyTo(new THREE.Vector3(0, 0, 5));
 	});
 	
@@ -428,6 +448,8 @@ document.getElementById( "progress" ).style.display = "block";
 	 parameters.zz = false;
       parameters.z5 = false;
 	  parameters.z10 = true;
+	   positionToggle.material.color.setHex(0x005b96);
+
 	  flyTo(new THREE.Vector3(0, 0, 10));
 	});
 	
@@ -708,7 +730,7 @@ scene.add( fovToggle );
 			// do something user targets object for specific time
 			if (parameters.zz == true)
 			{
-				alert("haa");
+				//alert("haa");
 				positionToggle.material.color.setHex(0x6497b1);
 				parameters.zz = false;
 				parameters.z5 = true;
@@ -759,6 +781,35 @@ scene.add( fovToggle );
    positionToggle.visible = false;
    positionToggle.position.set(0.12,-0.2,-0.16);	
    positionToggle.rotateOnAxis( new THREE.Vector3(1,0,0), - Math.PI / 2);
+   
+   /*
+   // set up rendererCss;
+	var rendererCss		= mixerContext.rendererCss;
+	rendererCss.setSize( window.innerWidth, window.innerHeight );
+	// set up rendererWebgl
+	var rendererWebgl	= mixerContext.rendererWebgl;
+	var css3dElement		= rendererCss.domElement;
+	css3dElement.style.position	= 'absolute';
+	css3dElement.style.top		= '0px';
+	css3dElement.style.width	= '100%';
+	css3dElement.style.height	= '100%';
+	document.body.appendChild( css3dElement );
+	
+	var webglCanvas			= renderer.domElement;
+	webglCanvas.style.position	= 'absolute';
+	webglCanvas.style.top		= '0px';
+	webglCanvas.style.width		= '100%';
+	webglCanvas.style.height	= '100%';
+	webglCanvas.style.pointerEvents	= 'none';
+	css3dElement.appendChild( webglCanvas );
+var url		= 'http://threejs.org/';
+	var domElement	= document.createElement('iframe');
+	domElement.src	= url;
+	domElement.style.border	= 'none';
+	// create the plane
+	var mixerPlane	= new THREEx.HtmlMixer.Plane(mixerContext, domElement);
+	mixerPlane.object3d.scale.multiplyScalar(2);
+	scene.add(mixerPlane.object3d);*/
 
 function detectmob() { 
 
@@ -950,7 +1001,7 @@ function createGeometry(data, name) {
     }
 
 
-	material = new THREE.PointsMaterial( { size: size,map: sprite1,sizeAttenuation:true, depthTest: false, blending: THREE.AdditiveBlending,transparent: true,  vertexColors: THREE.VertexColors } );
+	material = new THREE.PointsMaterial( { size: size,map: sprite1,sizeAttenuation:true, depthTest: false, blending: THREE.AdditiveBlending,transparent: true,  vertexColors: THREE.VertexColors} );
 	
     particles = new THREE.Points( geometry, material);
 	//particles.renderOrder = 1000;
@@ -988,7 +1039,7 @@ function createGeometry(data, name) {
 
     requestAnimationFrame( animate );
  	  
-    controls.update(delta);
+    controls.update();
 	
 	stats.update();
 	
@@ -1020,7 +1071,7 @@ function render() {
 
    earthMesh.rotation.y += 1* delta;
     */
-	effect.render(scene, camera);
+effect.render(scene, camera);
 	
 	
 	
@@ -1077,12 +1128,12 @@ function flyTo(location) {
     clusterParticles.geometry.colorsNeedUpdate = true;
 
     // set new rotation origin
-    visibleParticles.position.set(location.x, location.y, location.z);
+    visibleParticles.position.set(location.x, location.y, oldPosition.z - location.z);
     /*visibleParticles.geometry.translate(oldPosition.x - location.x,
                                         oldPosition.y - location.y,
                                         oldPosition.z - location.z);*/
 
-    clusterParticles.position.set(location.x, location.y, oldPosition.z - location.z);
+    clusterParticles.position.set(location.x, location.y,oldPosition.z - location.z);
     clusterParticles.geometry.translate(oldPosition.x - location.x,
                                         oldPosition.y - location.y,
                                         oldPosition.z - location.z);
