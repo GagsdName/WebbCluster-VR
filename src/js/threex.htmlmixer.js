@@ -87,8 +87,8 @@ THREEx.HtmlMixer.Context	= function(rendererWebgl, scene, camera){
 THREEx.HtmlMixer.Plane = function(mixerContext, domElement, opts) {	
 	opts		= opts	|| {}
 	opts.elementW	= opts.elementW	!== undefined	? opts.elementW	: 768
-	opts.planeW	= opts.planeW !== undefined	? opts.planeW	: 1
-	opts.planeH	= opts.planeH !== undefined	? opts.planeH	: 3/4
+	opts.planeW	= opts.planeW !== undefined	? opts.planeW	: 0.09
+	opts.planeH	= opts.planeH !== undefined	? opts.planeH	: 3/40
 	opts.object3d	= opts.object3d !== undefined	? opts.object3d	: null
 	this.domElement	= domElement
 
@@ -108,9 +108,13 @@ THREEx.HtmlMixer.Plane = function(mixerContext, domElement, opts) {
 			color	: new THREE.Color('black'),
 			blending: THREE.NoBlending,
 			side	: THREE.DoubleSide,
+			wireframe: false
+			
 		})
-		var geometry	= new THREE.PlaneGeometry( opts.planeW, opts.planeH )
+		var geometry	= new THREE.PlaneBufferGeometry( opts.planeW, opts.planeH )
 		var object3d	= new THREE.Mesh( geometry, planeMaterial )		
+		object3d.position.set(0.2,0,-0.2);
+		
 	}else{
 		var object3d	= opts.object3d
 	}

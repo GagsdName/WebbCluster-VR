@@ -65,7 +65,7 @@ WebVRConfig = {
   // panoramas with nothing interesting above or below.
   //YAW_ONLY: true, // Default: false.
   // Enable the deprecated version of the API (navigator.getVRDevices).
-  //ENABLE_DEPRECATED_API: true, // Default: false.
+ // ENABLE_DEPRECATED_API: true, // Default: false.
   // Scales the recommended buffer size reported by WebVR, which can improve
   // performance. Making this very small can lower the effective resolution of
   // your scene.
@@ -116,8 +116,10 @@ WebVRConfig = {
 
 <script src="node_modules/three/examples/js/controls/TrackballControls.js"></script>
 <script src="src/js/reticulum.js"></script>
-<script src='src/js/threex.htmlmixer.js'></script>
+<!--<script src='src/js/threex.htmlmixer.js'></script>
+
 <script src='src/js/CSS3DRenderer.js'></script>
+-->
 <!--
 <script src="src/js/gentilis_bold.typeface.js"></script>
 <script src="src/js/gentilis_regular.typeface.js"></script>
@@ -168,10 +170,30 @@ ga('create','UA-XXXXX-X');ga('send','pageview');
 var scene,
     camera,
     renderer,
+	rendererCSS,
+	cssScene,
 	effect,
 	stats,
 	gui,
-	rotationToggle,clusterToggle,visibleToggle,fovToggle,positionToggle,
+	rotationToggle,
+	menuToggle,
+	clusterToggle,
+	visibleToggle,
+	fovToggle,
+	positionToggle,
+	textMesh1,textMesh2,textMesh3,textMesh4,textMesh5,textMesh6,
+	canvas1, 
+	context1,
+	canvas2, 
+	context2,
+	canvas3, 
+	context3,
+	canvas4, 
+	context4,
+	canvas5, 
+	context5,
+	canvas6, 
+	context6,
 	params,
 	platform,
 	skybox,
@@ -251,8 +273,7 @@ function init() {
                                          20000);
 
     rotateAngle = ROTATE_ANGLE_HUMAN;
-	var mixerContext= new THREEx.HtmlMixer.Context(renderer, scene, camera);
-	alert(mixerContext);
+	
 // *******************************
 // --- Reticulum ---
 // initiate Reticulum so it loads up 
@@ -292,11 +313,12 @@ scene.add(camera);
     //camera.setLens(12);
 
    
-    renderer = new THREE.WebGLRenderer({antialias: true });
+    renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize( window.innerWidth, window.innerHeight );
     //renderer.sortObjects = true;
-
+ /*mixerContext= new THREEx.HtmlMixer.Context(renderer, scene, camera);
+	alert(mixerContext);*/
      // Apply VR stereo rendering to renderer.
     effect = new THREE.VREffect(renderer);
 	//alert(effect);
@@ -305,7 +327,7 @@ scene.add(camera);
  
 
 
-document.getElementById( "progress" ).style.display = "block";
+	document.getElementById( "progress" ).style.display = "block";
 			
 			
 			
@@ -468,40 +490,7 @@ document.getElementById( "progress" ).style.display = "block";
     var helper = new THREE.GridHelper( 30, 10, 0x0000ff,  0x0000ff );
 				helper.position.y = - 50;
 				
-    // *******************************
-	// --- Reticulum ---
-	// have the object react when user looks at it
-	// track the object
-	Reticulum.add( helper, {
-		reticleHoverColor: 0x00fff6,
-		fuseVisible: true,
-		onGazeLong: function(){
-			if((rotationToggle.visible) || (clusterToggle.visible) || (visibleToggle.visible) || (fovToggle.visible) || (positionToggle.visible) )
-			{
-			    rotationToggle.visible = false;
-				clusterToggle.visible = false;
-				visibleToggle.visible = false;
-				fovToggle.visible = false;
-				positionToggle.visible = false;
-			
-			
-			}
-			
-			else{
-			 rotationToggle.visible = true;
-				clusterToggle.visible = true;
-				visibleToggle.visible = true;
-				fovToggle.visible = true;
-				positionToggle.visible = true;
-			
-			}
-			
-			// do something user targets object for specific time
-			
-		}
-		
-	});
-	
+    
 	
 	scene.add( helper );
 
@@ -570,6 +559,7 @@ document.getElementById( "progress" ).style.display = "block";
   var text2 = textureLoader.load( "src/images/visible_toggle.png" );
   var text3 = textureLoader.load( "src/images/fov_toggle.png" );
   var text4 = textureLoader.load( "src/images/position_toggle.jpg" );
+  var menuText = textureLoader.load( "src/images/menu_icon.png" );
   
   //var geom = new THREE.BoxBufferGeometry( 0.05,0.05,0);
   var geom = new THREE.CircleBufferGeometry( 0.015, 32 );
@@ -578,28 +568,90 @@ document.getElementById( "progress" ).style.display = "block";
   var mat2 = new THREE.MeshBasicMaterial( { map:text2, wireframe:false,color:0x008744} );
   var mat3 = new THREE.MeshBasicMaterial( { map:text3, wireframe:false, color:0x008744} );
   var mat4 = new THREE.MeshBasicMaterial( { map:text4, wireframe:false, color:0xb3cde0} );
-   
-  rotationToggle = new THREE.Mesh( geom, mat );
+  var mat5 = new THREE.MeshBasicMaterial( { map:menuText, wireframe:false} );
+  
+  
+  menuToggle = new THREE.Mesh( geom, mat5 );
 
-  // *******************************
+// *******************************
 	// --- Reticulum ---
 	// have the object react when user looks at it
 	// track the object
+	Reticulum.add( menuToggle, {
+		reticleHoverColor: 0x00fff6,
+		fuseVisible: true,
+		onGazeOver: function(){
+		
+		context6.clearRect(1,1,200,200);
+		context6.fillStyle = "rgba(255,0,0,0.95)";
+		context6.fillText('Dwell here to toggle menu!', 0, 50);
+        textMesh6.visible = true;
+		},
+		onGazeOut: function(){
+			// do something when user moves reticle off targeted object
+			textMesh6.visible = false;
+		},
+		onGazeLong: function(){
+		
+
+			if((rotationToggle.visible) || (clusterToggle.visible) || (visibleToggle.visible) || (fovToggle.visible) || (positionToggle.visible) )
+			{
+			    rotationToggle.visible = false;
+				clusterToggle.visible = false;
+				visibleToggle.visible = false;
+				fovToggle.visible = false;
+				positionToggle.visible = false;
+			
+			
+					
+			
+			}
+			
+			else{
+				
+			
+				rotationToggle.visible = true;
+				clusterToggle.visible = true;
+				visibleToggle.visible = true;
+				fovToggle.visible = true;
+				positionToggle.visible = true;
+			
+		
+			}
+			
+			// do something user targets object for specific time
+			
+		}
+		
+	});
+	
+	
+  scene.add( menuToggle );
+  
+  
+  rotationToggle = new THREE.Mesh( geom, mat );
 	Reticulum.add( rotationToggle, {
 		reticleHoverColor: 0x00fff6,
 		fuseVisible: true,
+		
 		onGazeLong: function(){
-			setTimeout(timeout, 600);
+			setTimeout(function(){timeout(textMesh1);}, 600);
 			
 			if(checkRotate)
-			{ checkRotate = false;
-			  parameters.rot = false;
-		       rotationToggle.material.color.setHex(0xd62d20);
+			{ 
+				checkRotate = false;
+				parameters.rot = false;
+		      rotationToggle.material.color.setHex(0xd62d20);
+		
 			}
 			else {	
 			rotationToggle.material.color.setHex(0x008744);
 			checkRotate = true;
 			parameters.rot = true;
+			context1.clearRect(1,1,200,200);
+			context1.fillStyle = "rgba(255,0,0,0.95)";
+			context1.fillText('Rotation toggled!', 0, 50);
+		    textMesh1.visible = false;
 				    
 				}
 	
@@ -623,7 +675,7 @@ document.getElementById( "progress" ).style.display = "block";
 	
 		onGazeLong: function(){
 			// do something user targets object for specific time
-		      setTimeout(timeout, 600);
+		      setTimeout(function(){timeout(textMesh2);}, 600);
 			
 		
 			  if(clusterParticles.visible){
@@ -631,11 +683,19 @@ document.getElementById( "progress" ).style.display = "block";
 			  parameters.cs = false;
               clusterParticles.visible = false;
 		      clusterToggle.material.color.setHex(0xd62d20);
+			    context2.clearRect(1,1,2000,2000);
+			  context2.fillStyle = "rgba(255,0,0,0.95)";
+			  context2.fillText('Cluster toggled!', 0, 50);
+			  textMesh2.visible = false;
 			  }
 			  else {
 			  clusterToggle.material.color.setHex(0x008744);
 			  parameters.cs = true;
               clusterParticles.visible = true;
+			  context2.clearRect(1,1,2000,2000);
+			  context2.fillStyle = "rgba(255,0,0,0.95)";
+			  context2.fillText('Cluster toggled!', 0, 50);
+			  textMesh2.visible = false;
 			  }
 		
 		
@@ -657,19 +717,27 @@ scene.add( clusterToggle );
 
 		onGazeLong: function(){
 
-			      setTimeout(timeout, 600);
+			      setTimeout(function(){timeout(textMesh3);}, 600);
            // do something user targets object for specific time
               if(visibleParticles.visible){
       
 			  parameters.se = false;
               visibleParticles.visible = false;
 			visibleToggle.material.color.setHex(0xd62d20);
+			context3.clearRect(1,1,2000,2000);
+			  context3.fillStyle = "rgba(255,0,0,0.95)";
+			  context3.fillText('Visible Stars toggled!', 0, 50);
+			  textMesh3.visible = false;
 			  }
 			  else {
 	
 			  parameters.se = true;
               visibleParticles.visible = true;
 			 visibleToggle.material.color.setHex(0x008744);
+			 context3.clearRect(1,1,2000,2000);
+			  context3.fillStyle = "rgba(255,0,0,0.95)";
+			  context3.fillText('Visible Stars toggled!', 0, 50);
+			  textMesh3.visible = false;
 			  }
 
 			
@@ -688,7 +756,7 @@ scene.add( visibleToggle );
 		fuseVisible: true,
 
 		onGazeLong: function(){
-		 setTimeout(timeout, 600);
+		 setTimeout(function(){timeout(textMesh4);}, 600);
 			// do something user targets object for specific time
 		if(parameters.wfov) {
 				fovToggle.material.color.setHex(0xd62d20);
@@ -699,6 +767,11 @@ scene.add( visibleToggle );
         }, onComplete: function() {
             rotateAngle = ROTATE_ANGLE_HUMAN;
         }});
+			  context4.clearRect(1,1,2000,2000);
+			  context4.fillStyle = "rgba(255,0,0,0.95)";
+			  context4.fillText('FOV toggled!', 0, 50);
+			  textMesh4.visible = false;
+		
 		}
 		else{
 				fovToggle.material.color.setHex(0x008744);
@@ -709,7 +782,10 @@ scene.add( visibleToggle );
 				}, onComplete: function() {
 				rotateAngle = ROTATE_ANGLE_WIDE;
         }});
-		
+			context4.clearRect(1,1,2000,2000);
+			  context4.fillStyle = "rgba(255,0,0,0.95)";
+			  context4.fillText('FOV toggled!', 0, 50);
+			  textMesh4.visible = false;
 		}
 		}
 	});
@@ -726,7 +802,7 @@ scene.add( fovToggle );
 		fuseVisible: true,
 		
 		onGazeLong: function(){
-				setTimeout(timeout, 600);
+				setTimeout(function(){timeout(textMesh5);}, 600);
 			// do something user targets object for specific time
 			if (parameters.zz == true)
 			{
@@ -736,6 +812,11 @@ scene.add( fovToggle );
 				parameters.z5 = true;
 				parameters.z10 = false;
 				flyTo(new THREE.Vector3(0, 0, 5));
+				
+				context5.clearRect(1,1,2000,2000);
+				context5.fillStyle = "rgba(255,0,0,0.95)";
+				context5.fillText('Position toggled!', 0, 50);
+				textMesh5.visible = false;
 			}
 			else if(parameters.z5 == true)
 			{
@@ -744,6 +825,11 @@ scene.add( fovToggle );
 				parameters.z5 = false;
 				parameters.z10 = true;
 				flyTo(new THREE.Vector3(0, 0, 10));
+				
+				context5.clearRect(1,1,2000,2000);
+				context5.fillStyle = "rgba(255,0,0,0.95)";
+				context5.fillText('Position toggled!', 0, 50);
+				textMesh5.visible = false;
 			
 			}
 			else if(parameters.z10 == true)
@@ -753,6 +839,11 @@ scene.add( fovToggle );
 				parameters.z5 = false;
 				parameters.z10 = false;
 				flyTo(new THREE.Vector3(0, 0, 0));
+				
+				context5.clearRect(1,1,2000,2000);
+				context5.fillStyle = "rgba(255,0,0,0.95)";
+				context5.fillText('Position toggled!', 0, 50);
+				textMesh5.visible = false;
 			
 			}
 	  
@@ -761,6 +852,9 @@ scene.add( fovToggle );
 
     scene.add( positionToggle );
 
+   menuToggle.visible = true;
+   menuToggle.position.set(0,-0.3,-0.16);	
+   menuToggle.rotateOnAxis( new THREE.Vector3(1,0,0), - Math.PI / 2);
     
    rotationToggle.visible = false;
    rotationToggle.position.set(0,-0.2,-0.16);	
@@ -782,9 +876,151 @@ scene.add( fovToggle );
    positionToggle.position.set(0.12,-0.2,-0.16);	
    positionToggle.rotateOnAxis( new THREE.Vector3(1,0,0), - Math.PI / 2);
    
-   /*
+   ////////////
+	// CUSTOM //
+	////////////
+
+	/////// draw text on canvas /////////
+
+	for (i = 1; i < 7; i++) { 
+		
+		//window[canvas+i] = "ggan";
+			eval("canvas" + i + "=document.createElement('canvas');");
+			eval("context" + i + "=canvas"+i+".getContext('2d');");
+			eval("context" + i + ".font='Bold 20px Arial';");
+			eval("context" + i + ".fillStyle='rgba(255,0,0,0.95)';");
+			eval("context" + i + ".fillText('hello', 0, 50);");
+		
+			eval("var texture" + i + "=new THREE.Texture(canvas"+i+");");
+			eval("texture" + i + ".needsUpdate=true;");
+			
+			eval("var material" + i + "= new THREE.MeshBasicMaterial( {map: texture"+i+", side:THREE.DoubleSide , color: 0xff0000} );");
+			eval("material" + i + ".transparent=true;");
+			
+			eval("textMesh"+i+"= new THREE.Mesh(new THREE.PlaneBufferGeometry(0.2, 0.2),material"+i+");");
+			eval("textMesh"+i+".position.set(0.05,-0.3,-0.2);");
+			eval("textMesh"+i+".rotateOnAxis( new THREE.Vector3(1,0,0), - Math.PI / 2);");
+			eval("textMesh"+i+".visible = false;");
+			
+			eval("scene.add(textMesh"+i+");");
+			
+		}
+		//textMesh2.visible = true;
+		//alert(context2);
+	textMesh6.position.set(0.03,-0.25,-0.2);
+	// create a canvas element
+/*	canvas1 = document.createElement('canvas');
+	context1 = canvas1.getContext('2d');
+	context1.font = "Bold 20px Arial";
+	context1.fillStyle = "rgba(255,0,0,0.95)";
+    context1.fillText('Hello, world!', 0, 50);
+  */ 
+
+	// canvas contents will be used for a texture
+	/*var texture1 = new THREE.Texture(canvas1) 
+	texture1.needsUpdate = true;
+    */
+	
+    /*var material1 = new THREE.MeshBasicMaterial( {map: texture1, side:THREE.DoubleSide , color: 0xff0000} );
+    material1.transparent = true;
+*/
+	
+
+  /*  textMesh = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry(0.2, 0.2),
+        material1
+      );
+	textMesh.position.set(0.05,-0.3,-0.2);
+	textMesh.rotateOnAxis( new THREE.Vector3(1,0,0), - Math.PI / 2);
+    textMesh.visible = false;
+	scene.add( textMesh );
+	
+*/
+	
+	/*// Font with textures applied:
+	var chromeTexture = THREE.ImageUtils.loadTexture( 'src/images/Chrome.png' );
+	chromeTexture.wrapS = chromeTexture.wrapT = THREE.RepeatWrapping;
+	chromeTexture.repeat.set( 0.5, 0.5 );
+	var chromeMaterial = new THREE.MeshBasicMaterial( { map: chromeTexture } );
+	
+	var lavaTexture = THREE.ImageUtils.loadTexture( 'src/images/lava.jpg' );
+	lavaTexture.wrapS = lavaTexture.wrapT = THREE.RepeatWrapping;
+	lavaTexture.repeat.set( 0.05, 0.05 );
+	var lavaMaterial = new THREE.MeshBasicMaterial( { map: lavaTexture } );
+	
+	var materialArray = [ lavaMaterial, chromeMaterial ];
+	var textGeom = new THREE.TextGeometry( "Textures!", 
+	{
+		size: 3, height: 1, curveSegments: 3,
+		font: "helvetiker", weight: "bold", style: "normal",
+		bevelThickness: 2, bevelSize: 1, bevelEnabled: true,
+		material: 0, extrudeMaterial: 1
+	});
+	// font: helvetiker, gentilis, droid sans, droid serif, optimer
+	// weight: normal, bold
+	
+	var textMaterial = new THREE.MeshFaceMaterial(materialArray);
+	var textMesh = new THREE.Mesh(textGeom, textMaterial );
+	
+	textGeom.computeBoundingBox();
+	var textWidth = textGeom.boundingBox.max.x - textGeom.boundingBox.min.x;
+	
+	textMesh.position.set( -0.5 * textWidth, 20, 100 );
+	textMesh.rotation.x = -Math.PI / 4;
+	scene.add(textMesh);*/
+  /* 	var planeMaterial   = new THREE.MeshBasicMaterial({color: 0xffffff, opacity: 0.1, side: THREE.DoubleSide, wireframe:false });
+	var planeWidth = 0.360;
+    var planeHeight = 0.120;
+	var planeGeometry = new THREE.PlaneGeometry( planeWidth, planeHeight );
+	var planeMesh= new THREE.Mesh( planeGeometry, planeMaterial );
+    planeMesh.position.set(0.2,0,-0.5);
+	// add it to the standard (WebGL) scene
+	scene.add(planeMesh);
+	
+	// create a new scene to hold CSS
+	cssScene = new THREE.Scene();
+	// create the iframe to contain webpage
+	var element	= document.createElement('iframe')
+	// webpage to be loaded into iframe
+	element.src	= "sample.html";
+	// width of iframe in pixels
+	var elementWidth = 1024;
+	// force iframe to have same relative dimensions as planeGeometry
+	var aspectRatio = planeHeight / planeWidth;
+	var elementHeight = elementWidth * aspectRatio;
+	element.style.width  = elementWidth + "px";
+	element.style.height = elementHeight + "px";
+	
+	// create a CSS3DObject to display element
+	var cssObject = new THREE.CSS3DObject( element );
+	// synchronize cssObject position/rotation with planeMesh position/rotation 
+	cssObject.position = planeMesh.position;
+	cssObject.rotation = planeMesh.rotation;
+	// resize cssObject to same size as planeMesh (plus a border)
+	var percentBorder = 0.05;
+	cssObject.scale.x /= (1 + percentBorder) * (elementWidth / planeWidth);
+	cssObject.scale.y /= (1 + percentBorder) * (elementWidth / planeWidth);
+	cssScene.add(cssObject);
+	
+	
+		// create a renderer for CSS
+	rendererCSS	= new THREE.CSS3DRenderer();
+	rendererCSS.setSize( window.innerWidth, window.innerHeight );
+	rendererCSS.domElement.style.position = 'absolute';
+	rendererCSS.domElement.style.top	  = 0;
+	rendererCSS.domElement.style.margin	  = 0;
+	rendererCSS.domElement.style.padding  = 0;
+	document.body.appendChild( rendererCSS.domElement );
+	
+	
+	renderer.domElement.style.position = 'absolute';
+	renderer.domElement.style.top      = 0;
+	// make sure original renderer appears on top of CSS renderer
+	renderer.domElement.style.zIndex   = 1;
+	rendererCSS.domElement.appendChild( renderer.domElement );
+	*/
    // set up rendererCss;
-	var rendererCss		= mixerContext.rendererCss;
+	/*var rendererCss		= mixerContext.rendererCss;
 	rendererCss.setSize( window.innerWidth, window.innerHeight );
 	// set up rendererWebgl
 	var rendererWebgl	= mixerContext.rendererWebgl;
@@ -802,15 +1038,16 @@ scene.add( fovToggle );
 	webglCanvas.style.height	= '100%';
 	webglCanvas.style.pointerEvents	= 'none';
 	css3dElement.appendChild( webglCanvas );
-var url		= 'http://threejs.org/';
+    var url		= 'http://threejs.org/';
 	var domElement	= document.createElement('iframe');
 	domElement.src	= url;
 	domElement.style.border	= 'none';
+	alert(domElement);
 	// create the plane
 	var mixerPlane	= new THREEx.HtmlMixer.Plane(mixerContext, domElement);
 	mixerPlane.object3d.scale.multiplyScalar(2);
-	scene.add(mixerPlane.object3d);*/
-
+	scene.add(mixerPlane.object3d);
+*/
 function detectmob() { 
 
    if(window.innerWidth <= 800 && window.innerHeight <= 600) {
@@ -891,15 +1128,26 @@ function onWindowResize()
 	
 
 }
-function timeout()
+function timeout(textMesh)
 		{
 			rotationToggle.visible = false;
 			clusterToggle.visible = false;
 			visibleToggle.visible = false;
 			fovToggle.visible = false;
 			positionToggle.visible = false;
+			setTimeout(textTimeout, 1200);
+			textMesh.visible = true;
 			
 		}
+function textTimeout()
+{
+textMesh1.visible = false;
+textMesh2.visible = false;
+textMesh3.visible = false;
+textMesh4.visible = false;
+textMesh5.visible = false;
+menuToggle.visible  = true;
+}
 
 function createGeometry(data, name) {
 
@@ -1071,6 +1319,7 @@ function render() {
 
    earthMesh.rotation.y += 1* delta;
     */
+//rendererCSS.render( cssScene, camera );
 effect.render(scene, camera);
 	
 	
@@ -1128,12 +1377,12 @@ function flyTo(location) {
     clusterParticles.geometry.colorsNeedUpdate = true;
 
     // set new rotation origin
-    visibleParticles.position.set(location.x, location.y, oldPosition.z - location.z);
+    visibleParticles.position.set(location.x, location.y,  oldPosition.z -  location.z);
     /*visibleParticles.geometry.translate(oldPosition.x - location.x,
                                         oldPosition.y - location.y,
                                         oldPosition.z - location.z);*/
 
-    clusterParticles.position.set(location.x, location.y,oldPosition.z - location.z);
+    clusterParticles.position.set(location.x, location.y,  oldPosition.z - location.z);
     clusterParticles.geometry.translate(oldPosition.x - location.x,
                                         oldPosition.y - location.y,
                                         oldPosition.z - location.z);
