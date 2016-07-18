@@ -15,6 +15,6 @@ Steps to run -
 
 1) git clone https://github.iu.edu/singhgag/VR-Webb-Cluster . (which will clone the repository to the local file system)
 2) npm install (which will install any missing or all dependencies need for the application as specified in the node configuration, including grunt)
-3) grunt serve (which will launch an instance of the grunt dev server on port 9000 and open the same for viewing in a new browser window - use Google Chrome preferably for a better experience )
+3) grunt serve (which will launch an instance of the grunt dev server on port 7000 and open the same for viewing in a new browser window - use Google Chrome preferably for a better experience )
 4)(optional - if the command specified in step 3 doesn't work) npm install grunt --save-dev(which will install the grunt cli for the application and save it in the application folder heirarchy)
 
