@@ -11,3 +11,10 @@ Tech Used –
 4) Dat.gui
 
 
+Steps to run -
+
+Clone the github repository and use the following commands to have the application runnning -  
+1) npm install (which will install any missing or all dependencies need for the application as specified in the node configuration, including grunt)
+2) grunt serve (which will launch an instance of the grunt dev server on port 9000 and open the same for viewing in a new browser window - use Google Chrome preferably for a better experience )
+3)(optional - if the command specified in step 2 doesn't work) npm install grunt --save-dev(which will install the grunt cli for the application and save it in the application folder heirarchy)
+
