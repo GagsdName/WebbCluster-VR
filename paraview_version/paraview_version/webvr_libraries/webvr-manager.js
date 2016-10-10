@@ -478,6 +478,7 @@ WebVRManager.prototype.render = function(scene, camera, timestamp) {
  */
 WebVRManager.prototype.enterVRMode_ = function() {
   this.hmd.requestPresent({
+	 
     source: this.renderer.domElement,
     predistorted: this.predistorted
   });
@@ -531,6 +532,7 @@ WebVRManager.prototype.onFSClick_ = function() {
  * The VR button was clicked.
  */
 WebVRManager.prototype.onVRClick_ = function() {
+  document.getElementById('controls').style.display = 'block';
   // TODO: Remove this hack when iOS has fullscreen mode.
   // If this is an iframe on iOS, break out and open in no_fullscreen mode.
   if (this.mode == Modes.NORMAL && Util.isIOS() && Util.isIFrame()) {

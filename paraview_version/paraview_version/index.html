@@ -76,15 +76,44 @@
 <script src="./js/DAT.gui.js"></script>
 <script src="./js/DeviceOrientationControls.js"></script> <!-- For handling device orientation movement on the scene -->
 <script src="./js/TrackballControls.js"></script>
+<style>
+#progress {
+				color:white;
+				top:7em;
+				width: 100%;
+				font-size:3em;
+				font-variant:small-caps;
+				font-weight:bold;
+				position:absolute;
+				z-index:100;
+				text-align: center;
+				text-shadow: #000 0px 0px 10px;
+				display:none;
+			}
+</style>
 <body style='margin: 0px; overflow: hidden; text-align:center;'>
+<!-- Added a progress bar to allow for loading of the cluster stars -->
+<div id="progress" >
+			<span id="message">Loading ...</span>
+
+			<center>
+				<div id="progressbar" class="shadow"><div id="bar" class="shadow"></div></div>
+			</center>
+</div>
+
+
 <div id= "controls" style='position:absolute;top:0px;right:0px;'>
 
 </div>	
 
+
 <script>
+
+	
+
 var checkRotate = false,
-    ROTATE_ANGLE_HUMAN = 0.01,
-    ROTATE_ANGLE_WIDE = 0.03,
+    ROTATE_ANGLE_HUMAN = 0.001,
+    ROTATE_ANGLE_WIDE = 0.003,
 	ROTATE_AXIS = new THREE.Vector3(1, 0, 0),
 	rotateAngle = ROTATE_ANGLE_HUMAN,
 	textureCube, 
@@ -100,6 +129,7 @@ var checkRotate = false,
 	
 	;
 	
+
 	/* Declaring image texture objects for use as menu buttons */
 	textureLoader = new THREE.TextureLoader(); //THREE.TextureLoader is a class for loading textures.
 	text = textureLoader.load( "./images/rotate_icon.jpg" );
@@ -167,9 +197,9 @@ var checkRotate = false,
 		clickevents: true,
 		reticle: {
 			visible: true,    //always visible
-			restPoint: 1000, //Defines the reticle's resting point when no object has been targeted
+			restPoint: 1, //Defines the reticle's resting point when no object has been targeted
 			color: 0xcc0000, //color - red
-			innerRadius: 0.0003, 
+			innerRadius: 0.003, 
 			outerRadius: 0.0055,
 			hover: {              //on-hover parameters
 				color: 0xcc0000,
@@ -355,7 +385,7 @@ var checkRotate = false,
 		
 			}
 			else 
-			{	
+			{	//camera.rotateOnAxis( new THREE.Vector3(0,1,0),  Math.PI );
 				rotationToggle.material.color.setHex(0x008744);
 				checkRotate = true;   //enabling flag for rotation animation
 				parameters.rot = true;     //syncing with datGUI panel attributes
@@ -453,11 +483,11 @@ var checkRotate = false,
     scene.add( positionToggle );
 	positionToggle.rotateOnAxis( new THREE.Vector3(1,0,0),  -2*Math.PI );
 	
-	/*rotationToggle.visible = false;
+	rotationToggle.visible = false;
 	clusterToggle.visible = false;
 	visibleToggle.visible = false;
 	fovToggle.visible = false;
-	positionToggle.visible = false;*/
+	positionToggle.visible = false;
 	//////////////////////////////////////////////////////////////////////////////////
 	//		add an object in the scene
 	//////////////////////////////////////////////////////////////////////////////////
@@ -498,9 +528,9 @@ var checkRotate = false,
 	/* Adding image to the texture of the particle geometry */
 	sprite1 = textureLoader.load( "./gale_crater/martian_surface.jpg" );
 	var material = new THREE.MeshLambertMaterial( { color: 0xAAAAAA,transparent:true,opacity:5, map:sprite1, wireframe:false});
-	loader.load( './gale_crater/gale_crater.stl', function ( geometry ) {
+	loader.load( './gale_crater/gale_crater_reduced.stl', function ( geometry ) {
 	crater_mesh = new THREE.Mesh( geometry, material );
-	crater_mesh.position.set( 0, -17, - 17.2 );
+	crater_mesh.position.set( 0, -14, - 17.2 );
 	crater_mesh.rotation.set( - Math.PI / 2, 0, 0 );
 	crater_mesh.scale.set( 2, 2, 2 );
 	//mesh.castShadow = true;
@@ -524,14 +554,60 @@ var checkRotate = false,
 	
 	
 	///////////////////////////////////////////////////// alphamap test ////////////////////////////////////////
-	var mapT = textureLoader.load("./gale_crater/transparent_test.png");
+	var mapT = textureLoader.load("./gale_crater/mars_rover.png");
 	mapT.anisotropy = 4;
 	var materialT = new THREE.MeshBasicMaterial( { map: mapT, alphaTest: 0.5, side: THREE.DoubleSide } );
-	var geometryT = new THREE.BoxGeometry( 2, 2, 2 );
+	var geometryT = new THREE.CircleBufferGeometry( 2, 32 );
 	var meshT = new THREE.Mesh( geometryT, materialT );
 	meshT.position.x = 0;
-	meshT.position.y = 0;
-	//scene.add( meshT );
+	meshT.position.y = -3.3;
+	meshT.position.z=-11;
+	
+	/* Adding reticle on menu toggle */
+	Reticulum.add( meshT, {
+		reticleHoverColor: 0x00fff6,
+		fuseVisible: true,
+		onGazeOver: function()
+		{
+		
+			context6.clearRect(1,1,200,200); //clearing webgl canvas for text toggles and redrawing text on the same
+			context6.fillStyle = "rgba(255,0,0,0.95)";
+			context6.fillText('Dwell here to toggle menu!', 0, 50); //textmeshes are initialized later
+			textMesh6.visible = true; //made visible after redrawing text
+		},
+		onGazeOut: function()
+		{
+			// hide the text toggle when user moves reticle off targeted object
+			textMesh6.visible = false;
+		},
+		
+		onGazeLong: function() //actions for long gaze or dwell as the name suggests
+		{
+		
+			/*if else block basically for toggling menu buttons - make them invisible if already visible and vice versa*/
+			if((rotationToggle.visible) || (clusterToggle.visible) || (visibleToggle.visible) || (fovToggle.visible) || (positionToggle.visible) ) 
+			{
+			    rotationToggle.visible = false;
+				clusterToggle.visible = false;
+				visibleToggle.visible = false;
+				fovToggle.visible = false;
+				positionToggle.visible = false;
+
+			}
+			
+			else{
+
+				rotationToggle.visible = true;
+				clusterToggle.visible = true;
+				visibleToggle.visible = true;
+				fovToggle.visible = true;
+				positionToggle.visible = true;
+		
+				}
+		}
+		
+	});
+	scene.add( meshT );
 			
 	
 	
@@ -555,32 +631,6 @@ var checkRotate = false,
 
 	});
 
-*/
-////////////////////////////////////////////////////////////
-///////////////	        Astronaut      ////////////////////
-//////////////////////////////////////////////////////////
-
-	var mtlLoader = new THREE.MTLLoader();
-	mtlLoader.setPath( './EMU/' );
-	mtlLoader.load( 'EMU.mtl', function( materials ) {
-
-	materials.preload();
-
-	var objLoader = new THREE.OBJLoader();
-	objLoader.setMaterials( materials );
-	objLoader.setPath( './EMU/' );
-	objLoader.load( 'EMU.obj', function ( object ) {
-
-	//object.position.z= 0;
-	//object.position.y= 0;
-	object.position.set(0,0,-14);
-	object.rotateOnAxis( new THREE.Vector3(0,1,0),  -Math.PI );
-
-	scene.add( object );
-
-	}, onProgress, onError );
-
-	});
 
 
 				
@@ -634,6 +684,23 @@ function loadTextures(textureURLs) {
     cube = new THREE.Mesh( new THREE.CubeGeometry(100,100,100), new THREE.MeshFaceMaterial(materials) );
     cube.position.set(0,5,5);
 	//scene.add(cube);
+   
+   	/* Function to detect if the application has been opened in a mobile browser */
+	function detectmob() { 
+
+	   if(window.innerWidth <= 800 && window.innerHeight <= 600) {
+		 return true;
+	   } else {
+		 return false;
+	   }
+
+	}
+	var check = detectmob();
+	if (check == true)
+	{
+		document.getElementById('controls').style.display = 'none';
+	}
+   
    
  /* window resize event listener function */
 function onWindowResize()
