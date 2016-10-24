@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.2//EN" "http://www.web3d.org/specifications/x3d-3.2.dtd">
+<X3D profile='Interchange' version='3.2' xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' xsd:noNamespaceSchemaLocation='http://www.web3d.org/specifications/x3d-3.2.xsd'>
+  <head>
+    <meta content='SkyBox.x3d' name='title'/>
+    <meta content='Eric Wernert' name='creator'/>
+    <meta content='10 Oct 2016' name='created'/>
+  </head>
+  
+  <Scene>
+	<Background skycolor = '0.2 0.2 0.5'/>
+    <Group>
+    
+      <Shape DEF='Right'>
+        <IndexedFaceSet coordIndex='0 3 2 1' texCoordIndex= '2 3 0 1'>
+        
+          <Coordinate DEF='CubePoints' point='1 1 1   1 -1 1   1 -1 -1   1 1 -1   -1 1 1    -1 -1 1    -1 -1 -1    -1 1 -1'/>
+          <TextureCoordinate DEF='DefaultTextureCoordinate' point='0 0  1 0  1 1  0 1'/>
+          
+        </IndexedFaceSet>
+        <Appearance>
+          <Material DEF="CubeMat" emissiveColor="1 1 1" diffuseColor="1 1 1" ambientIntensity="1"/>
+          <ImageTexture url='"+X.png"'/>
+        </Appearance>
+      </Shape>
+
+      <Shape DEF='Left'>
+        <IndexedFaceSet coordIndex='7 4 5 6' texCoordIndex='2 3 0 1'>
+          <Coordinate USE='CubePoints'/>
+          <TextureCoordinate USE='DefaultTextureCoordinate'/>
+        </IndexedFaceSet>
+        <Appearance>
+          <Material USE="CubeMat"/>
+          <ImageTexture url='"-X.png" '/> 
+        </Appearance>
+      </Shape>
+      
+      <Shape DEF='Back'>
+        <IndexedFaceSet coordIndex='3 7 6 2' texCoordIndex='2 3 0 1'>
+          <Coordinate USE='CubePoints'/>
+          <TextureCoordinate USE='DefaultTextureCoordinate'/>
+        </IndexedFaceSet>
+        <Appearance>
+          <Material USE="CubeMat"/>
+          <ImageTexture url='"+Z.png" '/> 
+        </Appearance>
+      </Shape>
+      
+      <Shape DEF='Front'>
+        <IndexedFaceSet coordIndex='4 0 1 5' texCoordIndex='2 3 0 1'>
+          <Coordinate USE='CubePoints'/>
+          <TextureCoordinate USE='DefaultTextureCoordinate'/>
+        </IndexedFaceSet>
+        <Appearance>
+          <ImageTexture url='"-Z.png" '/> 
+          <Material USE="CubeMat"/>
+         </Appearance>
+      </Shape>
+      
+      <Shape DEF='Top'>
+        <IndexedFaceSet coordIndex='0 4 7 3' texCoordIndex='2 3 0 1'>
+          <Coordinate USE='CubePoints'/>
+          <TextureCoordinate USE='DefaultTextureCoordinate'/>
+        </IndexedFaceSet>
+        <Appearance>
+          <ImageTexture url='"+Y.png"'/>
+          <Material USE="CubeMat"/>
+         </Appearance>
+      </Shape>
+
+      <Shape DEF='Bottom'>
+        <IndexedFaceSet coordIndex='2 6 5 1' texCoordIndex='2 3 0 1'>
+          <Coordinate USE='CubePoints'/>
+          <TextureCoordinate USE='DefaultTextureCoordinate'/>
+        </IndexedFaceSet>
+        <Appearance>
+          <Material USE="CubeMat"/>
+          <ImageTexture url='"-Y.png"'/>
+        </Appearance>
+      </Shape>
+      
+    </Group>
+  </Scene>
+</X3D>

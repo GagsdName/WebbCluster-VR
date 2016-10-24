@@ -23,31 +23,31 @@ camera.SetViewUp(0, 1, 0)
 
 #back of cube
 #Render()
-#SaveScreenshot('C:\Users\AVL\Desktop\ParaView_test\pic_back.jpg', magnification=1)
-#WriteImage('C:\Users\AVL\Desktop\ParaView_test\pic.png')
-SaveScreenshot('C:\Users\AVL\Desktop\ParaView_test\pic_back.png')
+#SaveScreenshot('C:\Users\singhgag\Documents\GitHub\VR_Webb_Cluster_latest\pic_back.jpg', magnification=1)
+#WriteImage('C:\Users\singhgag\Documents\GitHub\VR_Webb_Cluster_latest\pic.png')
+SaveScreenshot('C:\Users\singhgag\Documents\GitHub\VR_Webb_Cluster_latest\-Z.png')
 
 #left
 camera.Yaw(90)
-SaveScreenshot('C:\Users\AVL\Desktop\ParaView_test\pic_left.png')
+SaveScreenshot('C:\Users\singhgag\Documents\GitHub\VR_Webb_Cluster_latest\-X.png')
 
 #front
 camera.Yaw(90)
-SaveScreenshot('C:\Users\AVL\Desktop\ParaView_test\pic_front.png')
+SaveScreenshot('C:\Users\singhgag\Documents\GitHub\VR_Webb_Cluster_latest\+Z.png')
 
 #right
 camera.Yaw(90)
-SaveScreenshot('C:\Users\AVL\Desktop\ParaView_test\pic_right.png')
+SaveScreenshot('C:\Users\singhgag\Documents\GitHub\VR_Webb_Cluster_latest\+X.png')
 
 #top
 camera.Yaw(90)
 #camera.Pitch(90)
 camera.SetFocalPoint(0,1,0)
 camera.SetViewUp(0, 0, 1)
-SaveScreenshot('C:\Users\AVL\Desktop\ParaView_test\pic_top.png')
+SaveScreenshot('C:\Users\singhgag\Documents\GitHub\VR_Webb_Cluster_latest\+Y.png')
 
 #bottom
 #camera.Pitch(-180)
 camera.SetFocalPoint(0,-1,0)
 camera.SetViewUp(0, 0, -1)
-SaveScreenshot('C:\Users\AVL\Desktop\ParaView_test\pic_bottom.png')
+SaveScreenshot('C:\Users\singhgag\Documents\GitHub\VR_Webb_Cluster_latest\-Y.png')

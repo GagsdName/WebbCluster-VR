@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 <script src='vendor/three.js/build/three.js'></script>
-<script src='vendor/three.js/examples/js/controls/OrbitControls.js'></script>
+<!--<script src='vendor/three.js/examples/js/controls/OrbitControls.js'></script>-->
 <script src="./loaders/DDSLoader.js"></script>
 <script src="./loaders/MTLLoader.js"></script>
 <script src="./loaders/OBJLoader.js"></script>
@@ -36,7 +36,9 @@
 
 <!--<script src="node_modules/three/examples/js/controls/TrackballControls.js"></script> -->
 <script src="./webvr_libraries/reticulum.js"></script>
-
+		<script src="./js/Detector.js"></script>
+		
+	
 <script>
 	/*
 	 * Debug parameters.
@@ -76,6 +78,7 @@
 <script src="./js/DAT.gui.js"></script>
 <script src="./js/DeviceOrientationControls.js"></script> <!-- For handling device orientation movement on the scene -->
 <script src="./js/TrackballControls.js"></script>
+<script src="./js/TweenLite.min.js"></script> <!-- for tweening between Field of Views -->
 <style>
 #progress {
 				color:white;
@@ -113,7 +116,7 @@
 
 var checkRotate = false,
     ROTATE_ANGLE_HUMAN = 0.001,
-    ROTATE_ANGLE_WIDE = 0.003,
+    ROTATE_ANGLE_WIDE = 0.0015,
 	ROTATE_AXIS = new THREE.Vector3(1, 0, 0),
 	rotateAngle = ROTATE_ANGLE_HUMAN,
 	textureCube, 
@@ -121,30 +124,130 @@ var checkRotate = false,
 	controls,
 	camera,
 	effect,
-	rotationToggle,menuToggle,clusterToggle,visibleToggle,fovToggle,positionToggle,
+	rotationToggle,menuToggle,clusterToggle,visibleToggle,fovToggle,positionToggle,blink_flag = true,
 	textureLoader,text, text1, text2, text3, text4, 
 	geom,mat,mat1,mat2,mat3,mat4,mat5,
 	textMesh,textMesh1,textMesh2,textMesh3,textMesh4,textMesh5,textMesh6,
-	context1,context2,context3,context4,context4,context5
+	context1,context2,context3,context4,context4,context5,
+	menuGroup,
+	visibleCube0,clusterCube0,visibleCube25,clusterCube25, visibleCube10,clusterCube10,
+	clusterCube,visibleCube,
+	textures, clusterTextures,textureURLs0,textureURLs25, textureURLs10, vistextureURLs0,vistextureURLs25, vistextureURLs10,
+	fade_counter=0,
+	FOV_HUMAN = 27,
+    FOV_WIDE = 75	;
+	texture_string = textureURLs25;
 	
-	;
-	
+	    textureURLs0 = [  // URLs of the six faces of the cube map 
+            "./cluster_pos0/cluster_pos0/+X.png",
+            "./cluster_pos0/cluster_pos0/-X.png",
+            "./cluster_pos0/cluster_pos0/+Y.png",
+            "./cluster_pos0/cluster_pos0/-Y.png",
+            "./cluster_pos0/cluster_pos0/+Z.png",
+            "./cluster_pos0/cluster_pos0/-Z.png",
+			"./cluster_pos0/cluster_pos0/alphas/+X.png",
+            "./cluster_pos0/cluster_pos0/alphas/-X.png",
+            "./cluster_pos0/cluster_pos0/alphas/+Y.png",
+            "./cluster_pos0/cluster_pos0/alphas/-Y.png",
+            "./cluster_pos0/cluster_pos0/alphas/+Z.png",
+            "./cluster_pos0/cluster_pos0/alphas/-Z.png",
+       ];
 
-	/* Declaring image texture objects for use as menu buttons */
+
+    textureURLs25 = [  // URLs of the six faces of the cube map 
+            "./cluster_pos2.5/cluster_pos2.5/+X.png",
+            "./cluster_pos2.5/cluster_pos2.5/-X.png",
+            "./cluster_pos2.5/cluster_pos2.5/+Y.png",
+            "./cluster_pos2.5/cluster_pos2.5/-Y.png",
+            "./cluster_pos2.5/cluster_pos2.5/+Z.png",
+            "./cluster_pos2.5/cluster_pos2.5/-Z.png",
+			"./cluster_pos2.5/cluster_pos2.5/alphas/+X.png",
+            "./cluster_pos2.5/cluster_pos2.5/alphas/-X.png",
+            "./cluster_pos2.5/cluster_pos2.5/alphas/+Y.png",
+            "./cluster_pos2.5/cluster_pos2.5/alphas/-Y.png",
+            "./cluster_pos2.5/cluster_pos2.5/alphas/+Z.png",
+            "./cluster_pos2.5/cluster_pos2.5/alphas/-Z.png",
+       ];
+
+
+
+    textureURLs10 = [  // URLs of the six faces of the cube map 
+            "./cluster_pos10/cluster_pos10/+X.png",
+            "./cluster_pos10/cluster_pos10/-X.png",
+            "./cluster_pos10/cluster_pos10/+Y.png",
+            "./cluster_pos10/cluster_pos10/-Y.png",
+            "./cluster_pos10/cluster_pos10/+Z.png",
+            "./cluster_pos10/cluster_pos10/-Z.png",
+			"./cluster_pos10/cluster_pos10/alphas/+X.png",
+            "./cluster_pos10/cluster_pos10/alphas/-X.png",
+            "./cluster_pos10/cluster_pos10/alphas/+Y.png",
+            "./cluster_pos10/cluster_pos10/alphas/-Y.png",
+            "./cluster_pos10/cluster_pos10/alphas/+Z.png",
+            "./cluster_pos10/cluster_pos10/alphas/-Z.png",
+       ];
+
+   vistextureURLs0 = [  // URLs of the six faces of the cube map 
+            "./visible_pos0/visible_pos0/+X.png",
+            "./visible_pos0/visible_pos0/-X.png",
+            "./visible_pos0/visible_pos0/+Y.png",
+            "./visible_pos0/visible_pos0/-Y.png",
+            "./visible_pos0/visible_pos0/+Z.png",
+            "./visible_pos0/visible_pos0/-Z.png",
+			"./visible_pos0/visible_pos0/alphas/+X.png",
+            "./visible_pos0/visible_pos0/alphas/-X.png",
+            "./visible_pos0/visible_pos0/alphas/+Y.png",
+            "./visible_pos0/visible_pos0/alphas/-Y.png",
+            "./visible_pos0/visible_pos0/alphas/+Z.png",
+            "./visible_pos0/visible_pos0/alphas/-Z.png",
+       ];
+
+	vistextureURLs25 = [  // URLs of the six faces of the cube map 
+            "./visible_pos2.5/visible_pos2.5/+X.png",
+            "./visible_pos2.5/visible_pos2.5/-X.png",
+            "./visible_pos2.5/visible_pos2.5/+Y.png",
+            "./visible_pos2.5/visible_pos2.5/-Y.png",
+            "./visible_pos2.5/visible_pos2.5/+Z.png",
+            "./visible_pos2.5/visible_pos2.5/-Z.png",
+			"./visible_pos2.5/visible_pos2.5/alphas/+X.png",
+            "./visible_pos2.5/visible_pos2.5/alphas/-X.png",
+            "./visible_pos2.5/visible_pos2.5/alphas/+Y.png",
+            "./visible_pos2.5/visible_pos2.5/alphas/-Y.png",
+            "./visible_pos2.5/visible_pos2.5/alphas/+Z.png",
+            "./visible_pos2.5/visible_pos2.5/alphas/-Z.png",
+       ];
+
+	vistextureURLs10 = [  // URLs of the six faces of the cube map 
+           "./visible_pos10/visible_pos10/+X.png",
+            "./visible_pos10/visible_pos10/-X.png",
+            "./visible_pos10/visible_pos10/+Y.png",
+            "./visible_pos10/visible_pos10/-Y.png",
+            "./visible_pos10/visible_pos10/+Z.png",
+            "./visible_pos10/visible_pos10/-Z.png",
+			"./visible_pos10/visible_pos10/alphas/+X.png",
+            "./visible_pos10/visible_pos10/alphas/-X.png",
+            "./visible_pos10/visible_pos10/alphas/+Y.png",
+            "./visible_pos10/visible_pos10/alphas/-Y.png",
+            "./visible_pos10/visible_pos10/alphas/+Z.png",
+            "./visible_pos10/visible_pos10/alphas/-Z.png",
+       ];
+	   
 	textureLoader = new THREE.TextureLoader(); //THREE.TextureLoader is a class for loading textures.
-	text = textureLoader.load( "./images/rotate_icon.jpg" );
-	text1 = textureLoader.load( "./images/cluster_toggle.png" );
-	text2 = textureLoader.load( "./images/visible_toggle.png" );
-	text3 = textureLoader.load( "./images/fov_toggle.png" );
-	text4 = textureLoader.load( "./images/position_toggle.jpg" );
-
+	text = textureLoader.load( "./images/icons/rotate.png" );
+	text1 = textureLoader.load( "./images/icons/cluster_stars.png" );
+	text2 = textureLoader.load( "./images/icons/visible_stars.png" );
+	//text3 = textureLoader.load( "./images/fov_toggle.png" );
+	text4 = textureLoader.load( "./images/icons/planet_position.png" );
+	var alpha_text4 = textureLoader.load("./images/icons/planet_position_alpha.png");
+	var alpha_text2 = textureLoader.load("./images/icons/visible_stars_alpha.png");
+	var alpha_text1 = textureLoader.load("./images/icons/cluster_stars_alpha.png");
+	var alpha_text = textureLoader.load("./images/icons/rotate_alpha.png");
 	/* Declaring Mesh Material objects for individual button boxes */
-	geom = new THREE.CircleBufferGeometry( 0.015, 32 );
-	mat = new THREE.MeshBasicMaterial( {map:text, wireframe:false, color: 0xd62d20} );
-	mat1 = new THREE.MeshBasicMaterial( {map:text1, wireframe:false, color:0x008744} );
-	mat2 = new THREE.MeshBasicMaterial( { map:text2, wireframe:false,color:0x008744} );
-	mat3 = new THREE.MeshBasicMaterial( { map:text3, wireframe:false, color:0x008744} );
-	mat4 = new THREE.MeshBasicMaterial( { map:text4, wireframe:false, color:0xb3cde0} );
+	geom = new THREE.PlaneBufferGeometry( 0.020,0.020, 32 );
+	mat = new THREE.MeshBasicMaterial( {map:text, wireframe:false, color: 0xd62d20, alphaMap:alpha_text, transparent: true} );
+	mat1 = new THREE.MeshBasicMaterial( {map:text1, wireframe:false, color:0xffe33d, alphaMap:alpha_text1, transparent: true} );
+	mat2 = new THREE.MeshBasicMaterial( { map:text2, wireframe:false,color:0x008744, alphaMap:alpha_text2, transparent: true} );
+	//mat3 = new THREE.MeshBasicMaterial( { map:text3, wireframe:false, color:0x008744} );
+	mat4 = new THREE.MeshBasicMaterial( { map:text4, wireframe:false, color:0xb3cde0, alphaMap:alpha_text4, transparent: true} );
 	//mat5 = new THREE.MeshBasicMaterial( { map:menuText, wireframe:false} );
 	
 	//////////////////////////////////////////////////////////////////////////////////
@@ -165,14 +268,14 @@ var checkRotate = false,
 	// init scene and camera
 	var scene	= new THREE.Scene();
 	camera	= new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 1000);
-	camera.position.z = -200;
-	//controls	= new THREE.OrbitControls(camera)
+	//camera.position.z = -200;
+	//camera.rotateOnAxis( new THREE.Vector3(1,0,0),  Math.PI);
+
+//	controls	= new THREE.OrbitControls(camera);
   // Apply VR stereo rendering to renderer.
     effect = new THREE.VREffect(renderer); // The VREffect.js library facilitates for stereo mode viewing of the three js scene
 	effect.setSize(window.innerWidth, window.innerHeight);	//initializing the size parameter for VREffect
-	
 
-	
 	// Create a VR manager helper to enter and exit VR mode.
     params = {
     hideButton: false, // Default: false.      //The enableVR aka the GoogleCardboard button at the bottom of the scene made visible
@@ -184,10 +287,7 @@ var checkRotate = false,
 
 	// Apply VR headset positional data to camera.
     controls = new THREE.VRControls(camera); //enabled through another open source library call VRControls.js
-	
-	
-	
-			
+
 	// *******************************
 	// --- Reticulum ---
 	// initiate Reticulum so it loads up 
@@ -197,7 +297,7 @@ var checkRotate = false,
 		clickevents: true,
 		reticle: {
 			visible: true,    //always visible
-			restPoint: 1, //Defines the reticle's resting point when no object has been targeted
+			restPoint: 0.5, //Defines the reticle's resting point when no object has been targeted
 			color: 0xcc0000, //color - red
 			innerRadius: 0.003, 
 			outerRadius: 0.0055,
@@ -222,7 +322,51 @@ var checkRotate = false,
 
 	// camera added to scene to see the reticle as the reticle was added to the camera. Traditionally, this does not need to  be done but for viewing the reticle this needs to be done.
 	scene.add(camera); 
+
+	textures = loadTextures(vistextureURLs0);
+	clusterTextures = loadTextures(textureURLs0);
+	/******************************************cluster stars cubemap position 1*********************************************/
+	var materials = [];
+   		
+		
+	for (var i = 0; i < 6; i++) {
+        materials.push( new THREE.MeshBasicMaterial( {
+			blending:THREE.AdditiveBlending,
+			blendSrc:THREE.OneMinusSrcAlphaFactor,
+			transparent:true,
+			opacity:1,
+            alphaMap:clusterTextures[i+6],
+			side: THREE.BackSide,  // IMPORTANT: To see the inside of the cube, back faces must be rendered!
+            map: clusterTextures[i]
+        } ) );
+    }
+    clusterCube0 = new THREE.Mesh( new THREE.CubeGeometry(100,100,100), new THREE.MeshFaceMaterial(materials) );
+    clusterCube0.position.set(0,0,0);
+	clusterCube0.scale.set(5,5,5);
+	scene.add(clusterCube0);
+	clusterCube0.visible = false;
 	
+	/////////////////////////////////////////////////////////visible stars cubemap position1 //////////////////////////////////////////////
+    var materials = [];
+    
+	for (var i = 0; i < 6; i++) {
+        materials.push( new THREE.MeshBasicMaterial( {
+			//blending:THREE.AdditiveBlending,
+			blendSrc:THREE.OneMinusSrcAlphaFactor,
+			transparent:true,
+			alphaMap:textures[i+6],
+            //alphaTest:0.5,
+			side: THREE.BackSide,  // IMPORTANT: To see the inside of the cube, back faces must be rendered!
+            map: textures[i]
+        } ) );
+    }
+    visibleCube0 = new THREE.Mesh( new THREE.CubeGeometry(100,100,100), new THREE.MeshFaceMaterial(materials) );
+    visibleCube0.position.set(0,0,0);
+	visibleCube0.scale.set(4,4,4);
+	scene.add(visibleCube0);
+    visibleCube0.visible = false;
+	clusterCube = clusterCube0;
+	visibleCube = visibleCube0;
 		/***********************************************************************************************
 	******************dat GUI panel for toggling different attributes of the scene ************
 	*****************Facilitated by the datGUI plugin *********************************************/
@@ -230,32 +374,50 @@ var checkRotate = false,
     document.getElementById('controls').appendChild(gui.domElement); //indicates where the panel is to be displayed
 	document.getElementById('controls').style.display = 'block';
 	parameters = 
-	{ se: true, cs: true, mv: false, plt: false, rot: false, sky: true, hfov: false, wfov: true, zz: true, z5: false, z10: false,  color: "#ffff00" }; //indicates presets for the panel
+	{ se: true, cs: true, mv: false, plt: false, rot: false, sky: true, hfov: false, wfov: true, zz: true, z5: false, z10: false,  color: "#ffff00", clo:true, clb: true}; //indicates presets for the panel
 
 	/*First folder*/ //attributes can be grouped under different groups reffered to as folders in datGUI terminology. 
-	var folder1 = gui.addFolder('Toggle Features');
+	var folder1 = gui.addFolder('Toggle Cluster');
 	
 	/*datGUI visible stars toggle */
-	var seGUI = folder1.add( parameters, 'se' ).name("Earth visible stars").listen();
-	seGUI.onChange( function(value) 
+	//var seGUI = folder1.add( parameters, 'se' ).name("Earth visible stars").listen();
+	/*seGUI.onChange( function(value) 
 	{ 
-		visibleParticles.visible = value;
+		visibleCube.visible = value;
 			if (value == false)visibleToggle.material.color.setHex(0xd62d20);
 			
 			else visibleToggle.material.color.setHex(0x008744);
 	});
-	
+	*/
 	/*datGUI cluster stars toggle */
-	var csGUI = folder1.add( parameters, 'cs' ).name("Cluster stars").listen();
-	csGUI.onChange( function(value)
+	var clusterOn = folder1.add( parameters, 'clo' ).name("On").listen();
+	clusterOn.onChange( function(value)
 	{ 
-		clusterParticles.visible = value;
-		if (value == false)clusterToggle.material.color.setHex(0xd62d20);
+		clusterCube.visible = value;
+		
+		if (value == false){ parameters.clb = false;blink_flag = false;clusterToggle.material.color.setHex(0xd62d20);}
 		else clusterToggle.material.color.setHex(0x008744);
 	});
 	
+
+	
+	var clusterBlink = folder1.add( parameters, 'clb' ).name("Blink").listen();
+	clusterBlink.onChange( function(value)
+	{ 
+		//clusterCube.visible = value;
+		if (value == false){if (parameters.clo == false)clusterToggle.material.color.setHex(0xd62d20);
+					else clusterToggle.material.color.setHex(0x008744);
+					
+					blink_flag = false;}
+		else if (parameters.clo == true){clusterToggle.material.color.setHex(0xffe33d);blink_flag = true;}
+		
+		console.log(blink_flag);
+	});
+	
+	var folder2 = gui.addFolder('Toggle Rotation');
+	
 	/*datGUI rotation toggle */
-    var rotGUI = folder1.add( parameters, 'rot' ).name("Rotate").listen();
+    var rotGUI = folder2.add( parameters, 'rot' ).name("Rotate").listen();
 	rotGUI.onChange( function(value) 
 	{ 
 		checkRotate = value;
@@ -267,12 +429,12 @@ var checkRotate = false,
 	
 
 	/*datGUI fov toggle */
-	var folder2 = gui.addFolder('Toggle Field of View');
-	var hfovGUI = folder2.add( parameters, 'hfov' ).name("Human View").listen();
+	var folder3 = gui.addFolder('Toggle Field of View');
+	var hfovGUI = folder3.add( parameters, 'hfov' ).name("Human View").listen();
 	hfovGUI.onChange( function(value) { 
 	parameters.wfov = false;
 	parameters.hfov = true;
-	fovToggle.material.color.setHex(0xd62d20);
+	
  
 	TweenLite.to(camera, 1, {fov: FOV_HUMAN, onUpdate: function() 
 	{
@@ -283,13 +445,13 @@ var checkRotate = false,
 	
 	});
 	/*datGUI fov toggle continued */
-	var wfovGUI = folder2.add( parameters, 'wfov' ).name("Wide View").listen();
+	var wfovGUI = folder3.add( parameters, 'wfov' ).name("Wide View").listen();
 	wfovGUI.onChange( function(value) 
 	{ 
 	
 		parameters.hfov = false;
 		parameters.wfov = true;
-		fovToggle.material.color.setHex(0x008744);
+		
 		
 		TweenLite.to(camera, 1, {fov: FOV_WIDE, onUpdate: function() {
 				camera.updateProjectionMatrix();
@@ -300,46 +462,136 @@ var checkRotate = false,
 	});
 	
 	/*datGUI position toggle */
-	var folder3 = gui.addFolder('Toggle Position');
-	var zzGUI = folder3.add( parameters, 'zz' ).name("(0 0 0)").listen();
+	var folder4 = gui.addFolder('Toggle Position');
+	var zzGUI = folder4.add( parameters, 'zz' ).name("(0 0 0)").listen();
 	zzGUI.onChange( function(value) { 
-	  parameters.zz = true;
-      parameters.z5 = false;
-	  parameters.z10 = false;
-	  	  positionToggle.material.color.setHex(0xb3cde0);
-
-	  flyTo(new THREE.Vector3(0, 0, 0));
-	  
+		parameters.zz = true;
+		parameters.z5 = false;
+		parameters.z10 = false;
+	  	positionToggle.material.color.setHex(0xb3cde0);
+		
+	
+		
 	});
 	/*position toggle contd, for (0,0,5) or 5 parsecs */
-	var z5 = folder3.add( parameters, 'z5' ).name("(0,0,5 pc)").listen();
+	var z5 = folder4.add( parameters, 'z5' ).name("(0,0,2.5 pc)").listen();
 	z5.onChange( function(value) { 
-	  parameters.zz = false;
-      parameters.z5 = true;
-	  parameters.z10 = false;
-	 	  positionToggle.material.color.setHex(0x6497b1);
-	  flyTo(new THREE.Vector3(0, 0, 5));
+		parameters.zz = false;
+		parameters.z5 = true;
+		parameters.z10 = false;
+		positionToggle.material.color.setHex(0x6497b1);
+		
 	});
 	/*position toggle cont, for (0,0,10) or 10 parsecs */
-	var z10 = folder3.add( parameters, 'z10' ).name("(0,0,10 pc)").listen();
+	var z10 = folder4.add( parameters, 'z10' ).name("(0,0,10 pc)").listen();
 	z10.onChange( function(value) { 
-	 parameters.zz = false;
-      parameters.z5 = false;
-	  parameters.z10 = true;
-	   positionToggle.material.color.setHex(0x005b96);
-
-	  flyTo(new THREE.Vector3(0, 0, 10));
+		parameters.zz = false;
+		parameters.z5 = false;
+		parameters.z10 = true;
+		positionToggle.material.color.setHex(0x005b96);
+		
 	});
+	/******************************************cluster stars cubemap position 2*********************************************/
+	textures = loadTextures(vistextureURLs25);
+	clusterTextures = loadTextures(textureURLs25);
+		
+	var materials = [];
+   		
+		
+	for (var i = 0; i < 6; i++) {
+        materials.push( new THREE.MeshBasicMaterial( {
+			blending:THREE.AdditiveBlending,
+			blendSrc:THREE.OneMinusSrcAlphaFactor,
+			transparent:true,
+			opacity:1,
+            alphaMap:clusterTextures[i+6],
+			side: THREE.BackSide,  // IMPORTANT: To see the inside of the cube, back faces must be rendered!
+            map: clusterTextures[i]
+        } ) );
+    }
+    clusterCube25 = new THREE.Mesh( new THREE.CubeGeometry(100,100,100), new THREE.MeshFaceMaterial(materials) );
+    clusterCube25.position.set(0,0,0);
+	clusterCube25.scale.set(6,6,6);
+	scene.add(clusterCube25);
+	clusterCube25.visible = false;
+	
+	///////////////////////////////////////////////////////// visible stars cubemap position 2//////////////////////////////////////////////
+    var materials = [];
+    
+	for (var i = 0; i < 6; i++) {
+        materials.push( new THREE.MeshBasicMaterial( {
+			//blending:THREE.AdditiveBlending,
+			blendSrc:THREE.OneMinusSrcAlphaFactor,
+			transparent:true,
+			alphaMap:textures[i+6],
+            //alphaTest:0.5,
+			side: THREE.BackSide,  // IMPORTANT: To see the inside of the cube, back faces must be rendered!
+            map: textures[i]
+        } ) );
+    }
+    visibleCube25 = new THREE.Mesh( new THREE.CubeGeometry(100,100,100), new THREE.MeshFaceMaterial(materials) );
+    visibleCube25.position.set(0,0,0);
+	visibleCube25.scale.set(5,5,5);
+	scene.add(visibleCube25);
+    visibleCube25.visible = false;
 	
 	
 	
+/****************************************** cluster stars cubemap position 3*********************************************/
+	textures = loadTextures(vistextureURLs10);
+		clusterTextures = loadTextures(textureURLs10);
+		
+
+	var materials = [];
+   		
+		
+	for (var i = 0; i < 6; i++) {
+        materials.push( new THREE.MeshBasicMaterial( {
+			blending:THREE.AdditiveBlending,
+			blendSrc:THREE.OneMinusSrcAlphaFactor,
+			transparent:true,
+			opacity:1,
+            alphaMap:clusterTextures[i+6],
+			side: THREE.BackSide,  // IMPORTANT: To see the inside of the cube, back faces must be rendered!
+            map: clusterTextures[i]
+        } ) );
+    }
+    clusterCube10 = new THREE.Mesh( new THREE.CubeGeometry(100,100,100), new THREE.MeshFaceMaterial(materials) );
+    clusterCube10.position.set(0,0,0);
+	clusterCube10.scale.set(7,7,7);
+	scene.add(clusterCube10);
+	clusterCube10.visible = false;
+	
+	///////////////////////////////////////////////////////// visible stars cubemap position 3 //////////////////////////////////////////////
+    var materials = [];
+    
+	for (var i = 0; i < 6; i++) {
+        materials.push( new THREE.MeshBasicMaterial( {
+			//blending:THREE.AdditiveBlending,
+			blendSrc:THREE.OneMinusSrcAlphaFactor,
+			transparent:true,
+			alphaMap:textures[i+6],
+            //alphaTest:0.5,
+			side: THREE.BackSide,  // IMPORTANT: To see the inside of the cube, back faces must be rendered!
+            map: textures[i]
+        } ) );
+    }
+    visibleCube10 = new THREE.Mesh( new THREE.CubeGeometry(100,100,100), new THREE.MeshFaceMaterial(materials) );
+    visibleCube10.position.set(0,0,0);
+	visibleCube10.scale.set(6,6,6);
+	scene.add(visibleCube10);
+    visibleCube10.visible = false;
+	
+	
+	
+
 	
 	///////////////////////////////////////////////////////////////////////////////////
 	//////////                    Add 3D menu                          ////////////////
 	//////////////////////////////////////////////////////////////////////////////////
 	
 	/////// drawing initial text on canvas for the different toggles  /////////	
-	for (i = 1; i < 7; i++) { 
+	/*for (i = 1; i < 7; i++) { 
 		
 		//window[canvas+i] = "ggan";
 			eval("canvas" + i + "=document.createElement('canvas');");
@@ -356,18 +608,20 @@ var checkRotate = false,
 			
 			eval("textMesh"+i+"= new THREE.Mesh(new THREE.PlaneBufferGeometry(0.2, 0.2),material"+i+");");
 			eval("textMesh"+i+".position.set(0,0,0);");
-			eval("textMesh"+i+".rotateOnAxis( new THREE.Vector3(1,0,0), - Math.PI / 2);");
+			eval("textMesh"+i+".rotateOnAxis( new THREE.Vector3(1,0,0),  Math.PI / 2);");
 			eval("textMesh"+i+".visible = false;");
-			
 			eval("scene.add(textMesh"+i+");");
 			
 		}
-		
-		textMesh6.position.set(0,0,0);
+		*/
+	//textMesh6.position.set(0,0,0);
+	//textMesh6.rotateOnAxis( new THREE.Vector3(1,0,0),  Math.PI/2 );
+	
 	/* Rotation toggle Mesh object */
 	rotationToggle = new THREE.Mesh( geom, mat );
-	rotationToggle.position.set(0.12,0.3,-1);
-	rotationToggle.scale.set(2,2,2);
+
+	rotationToggle.position.set(-0.08,0.03,-0.7);
+	rotationToggle.scale.set(9,9,9);
 
 	/* Adding reticle to cluster toggle */
 	Reticulum.add( rotationToggle, {
@@ -388,11 +642,12 @@ var checkRotate = false,
 			{	//camera.rotateOnAxis( new THREE.Vector3(0,1,0),  Math.PI );
 				rotationToggle.material.color.setHex(0x008744);
 				checkRotate = true;   //enabling flag for rotation animation
+				
 				parameters.rot = true;     //syncing with datGUI panel attributes
-				context1.clearRect(1,1,200,200);
-				context1.fillStyle = "rgba(255,0,0,0.95)";
-				context1.fillText('Rotation toggled!', 0, 50);
-				textMesh1.visible = false;
+				//context1.clearRect(1,1,200,200);
+				//context1.fillStyle = "rgba(255,0,0,0.95)";
+				//context1.fillText('Rotation toggled!', 0, 50);
+				//textMesh1.visible = false;
 						
 			}	
 	
@@ -402,51 +657,89 @@ var checkRotate = false,
 	/* Adding rotation toggle to scene */
 	scene.add( rotationToggle );
 	rotationToggle.rotateOnAxis( new THREE.Vector3(1,0,0),  -2*Math.PI );
-	
+	//menuGroup.add(rotationToggle);
 	
 	/* Visible stars toggle button Mesh object */
-	visibleToggle = new THREE.Mesh( geom, mat2 );
-	visibleToggle.position.set(-0.12,0.3,-1);
-	visibleToggle.scale.set(2,2,2);
-	
-		Reticulum.add( visibleToggle, {
-		reticleHoverColor: 0x00fff6,
-		fuseVisible: true,
-	
-		onGazeLong: function()
-		{
-			
-	
-		}
-
-	});
+	//visibleToggle = new THREE.Mesh( geom, mat2 );
+	//visibleToggle.position.set(-0.24,0.03,-0.4);
+	//visibleToggle.scale.set(5,5,5);
+	//Visible Toggle reticulum code goes here
+		
 	/* Adding visible stars toggle to the scene */
-	scene.add( visibleToggle );
-	visibleToggle.rotateOnAxis( new THREE.Vector3(1,0,0),  -2*Math.PI );
-	
+	//scene.add( visibleToggle );
+	//visibleToggle.rotateOnAxis( new THREE.Vector3(1,0,0),  -2*Math.PI );
+	//menuGroup.add(visibleToggle);
 	
 	/* Cluster toggle mesh object */
 	clusterToggle = new THREE.Mesh( geom, mat1 );
-	clusterToggle.position.set(0,0.3,-1);
-	clusterToggle.scale.set(2,2,2);
+	clusterToggle.position.set(-0.24,0.03,-0.7);
+	clusterToggle.scale.set(9,9,9);
 	Reticulum.add( clusterToggle, {
 		reticleHoverColor: 0x00fff6,
 		fuseVisible: true,
 	
 		onGazeLong: function()
 		{
+			// do something user targets object for specific time
+		      setTimeout(function(){timeout(textMesh2);}, 600);
 			
-	
+				if((parameters.clo == true) && (parameters.clb == true))
+				{
+					parameters.clo = false;
+					parameters.clb = false;
+					clusterCube.visible = false;
+					parameters.clf = true;
+					blink_flag = false;
+					clusterToggle.material.color.setHex(0xd62d20);
+					
+				
+			
+					
+				}
+			
+			else if (parameters.clo == true)
+			{
+						parameters.clo = true;
+						parameters.clb = true;
+						parameters.clf = false;
+						clusterCube.visible = true;
+						blink_flag = true;
+						//animate();
+						clusterToggle.material.color.setHex(0xffe33d);
+							
+					
+			}
+			
+			else if (parameters.clo == false)
+			{
+				clusterToggle.material.color.setHex(0x008744);
+				parameters.clo = true;
+				clusterCube.visible = true;
+				blink_flag = false;
+			
+			}
+			  
+			
+		
+				
+			
+			
+				
+			
+					
 		}
 
 	});
+	
 	/* Adding cluster toggle to scene */
 	scene.add( clusterToggle );
 	clusterToggle.rotateOnAxis( new THREE.Vector3(1,0,0),  -2*Math.PI );
+	//alert(blink_flag);
 	
+	//menuGroup.add(clusterToggle);
 	/* FOV toggle mesh object */
-	fovToggle = new THREE.Mesh( geom, mat3 );
-	fovToggle.position.set(0.24,0.3,-1);
+	/*fovToggle = new THREE.Mesh( geom, mat3 );
+	fovToggle.position.set(-0.12,0.05,-0.7);
 	fovToggle.scale.set(2,2,2);
 	Reticulum.add( fovToggle, {
 		reticleHoverColor: 0x00fff6,
@@ -454,27 +747,96 @@ var checkRotate = false,
 	
 		onGazeLong: function()
 		{
+			setTimeout(function(){timeout(textMesh4);}, 600);
+			// do something user when targets object for specific time
+			if(parameters.wfov) 
+			{
+				fovToggle.material.color.setHex(0xd62d20);
+				parameters.wfov = false;
+				parameters.hfov = true;
+				TweenLite.to(camera, 1, {fov: FOV_HUMAN, onUpdate: function() 
+				{
+					camera.updateProjectionMatrix();
+				}, onComplete: function() 
+			{
+				rotateAngle = ROTATE_ANGLE_HUMAN;
+				
+			}});
+			 
+		
+		}
+		else{
+				fovToggle.material.color.setHex(0x008744);
+				parameters.hfov = false;
+				parameters.wfov = true;
+				TweenLite.to(camera, 1, {fov: FOV_WIDE, onUpdate: function() //Tween.js api for tweening or animated transitioning between different FOVs
+				{
+					camera.updateProjectionMatrix(); //camera matrix needs to be updated every time an animation occurs`
+				}, onComplete: function() 
+				{
+					rotateAngle = ROTATE_ANGLE_WIDE;
+				}});
 			
+			}
 	
 		}
 
 	});
 	/* Adding fov toggle to the scene */
-	scene.add( fovToggle );
-	fovToggle.rotateOnAxis( new THREE.Vector3(1,0,0),  -2*Math.PI );
-	
+	//scene.add( fovToggle );*/
+	//fovToggle.rotateOnAxis( new THREE.Vector3(1,0,0),  -2*Math.PI );
+	//menuGroup.add(fovToggle);
 	
 	/* Position toggle mesh object */
 	positionToggle = new THREE.Mesh( geom, mat4 );
-	positionToggle.position.set(0.36,0.3,-1);
-	positionToggle.scale.set(2,2,2);
+	positionToggle.position.set(0.08,0.03,-0.7);
+	positionToggle.scale.set(9,9,9);
 	Reticulum.add( positionToggle, {
 		reticleHoverColor: 0x00fff6,
 		fuseVisible: true,
 	
+	
 		onGazeLong: function()
 		{
+				setTimeout(function(){timeout(textMesh5);}, 600);
+				// do something when user targets object for specific time
+				if (parameters.zz == true)
+				{
+				
+					positionToggle.material.color.setHex(0x6497b1);
+					parameters.zz = false;
+					parameters.z5 = true;
+					parameters.z10 = false;
+					
+					//flyTo(new THREE.Vector3(0, 0, 5));
+					
+				
+				}
+			else if(parameters.z5 == true)
+			{
+				positionToggle.material.color.setHex(0x005b96);
+				parameters.zz = false;
+				parameters.z5 = false;
+				parameters.z10 = true;
+				
+				//flyTo(new THREE.Vector3(0, 0, 10));
+				
 			
+			
+			}
+			else if(parameters.z10 == true)
+			{		
+				positionToggle.material.color.setHex(0xb3cde0);
+				parameters.zz = true;
+				parameters.z5 = false;
+				parameters.z10 = false;
+				
+				//flyTo(new THREE.Vector3(0, 0, 0));
+				
+			
+			
+			}
+	  
 	
 		}
 
@@ -482,47 +844,107 @@ var checkRotate = false,
 	/* Adding position toggle to the scene */
     scene.add( positionToggle );
 	positionToggle.rotateOnAxis( new THREE.Vector3(1,0,0),  -2*Math.PI );
-	
+	//menuGroup.add(positionToggle);
 	rotationToggle.visible = false;
 	clusterToggle.visible = false;
-	visibleToggle.visible = false;
-	fovToggle.visible = false;
+	//visibleToggle.visible = false;
+	//fovToggle.visible = false;
 	positionToggle.visible = false;
 	//////////////////////////////////////////////////////////////////////////////////
 	//		add an object in the scene
 	//////////////////////////////////////////////////////////////////////////////////
 
 	
-	var r = "./davetest/";
+	var r = "./MilkyWay/";
 
-	var urls = [
+	/*var urls = [
 		r + "+X.png", r + "-X.png",
 		r + "+Y.png", r + "-Y.png",
 		r + "-Z.png", r + "+Z.png"
 				];
-
+*/
+	var urls = [ r + "dark-s_px.jpg", r + "dark-s_nx.jpg",
+							 r + "dark-s_py.jpg", r + "dark-s_ny.jpg",
+							 r + "dark-s_pz.jpg", r + "dark-s_nz.jpg" ];
 	textureCube = new THREE.CubeTextureLoader().load( urls );
 	textureCube.mapping = THREE.CubeRefractionMapping;
 	//textureCube.format = THREE.RGBFormat;
 	//textureCube.mapping = THREE.CubeReflectionMapping;
 
-	var cubeShader = THREE.ShaderLib[ "cube" ];
-				var cubeMaterial = new THREE.ShaderMaterial( {
-					fragmentShader: cubeShader.fragmentShader,
-					vertexShader: cubeShader.vertexShader,
-					uniforms: cubeShader.uniforms,
+	var textureCube = new THREE.CubeTextureLoader().load( urls );
+				textureCube.format = THREE.RGBFormat;
+				var skyboxShader = THREE.ShaderLib[ "cube" ];
+				skyboxShader.uniforms[ "tCube" ].value = textureCube;
+				var skyboxMaterial = new THREE.ShaderMaterial( {
+					fragmentShader: skyboxShader.fragmentShader,
+					vertexShader: skyboxShader.vertexShader,
+					uniforms: skyboxShader.uniforms,
 					depthWrite: false,
 					side: THREE.BackSide
-				} );
-	cubeMaterial.uniforms[ "tCube" ].value = textureCube;
-	cubeMesh = new THREE.Mesh( new THREE.BoxGeometry( 100, 100, 100 ), cubeMaterial );
-	//cubeMesh.scale.set(11,11,11);
-	//scene.add( cubeMesh );
-	scene.background = textureCube;
+				} ),
+				mesh = new THREE.Mesh( new THREE.BoxGeometry( 100, 100, 100 ), skyboxMaterial );
+				//scene.add( mesh );
+	//scene.background = textureCube;
+		// Skybox
+		/////////////////////////////////bloompass-stuff/////////////////////////////////////////
+		/*var extensions = new THREE.WebGLExtensions( renderer.getContext() );
+
+				// var width = window.innerWidth || 1;
+				var height = window.innerHeight || 1;
+
+				var parameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, stencilBuffer: false };
+				var regularRenderTarget = new THREE.WebGLRenderTarget( windowThirdX, height, parameters );
+				ldrEffectComposer = new THREE.EffectComposer( renderer, regularRenderTarget );
+
+				if ( extensions.get('OES_texture_half_float_linear') ) {
+					parameters.type = THREE.FloatType;
+				}
+				var hdrRenderTarget = new THREE.WebGLRenderTarget( windowThirdX, height, parameters );
+				dynamicHdrEffectComposer = new THREE.EffectComposer( renderer, hdrRenderTarget );
+				dynamicHdrEffectComposer.setSize( window.innerWidth, window.innerHeight );
+				hdrEffectComposer = new THREE.EffectComposer( renderer, hdrRenderTarget );
+
+				var debugPass = new THREE.RenderPass( debugScene, cameraBG );
+				debugPass.clear = false;
+				var scenePass = new THREE.RenderPass( scene, camera, undefined, undefined, undefined );
+				var skyboxPass = new THREE.RenderPass( sceneCube, cameraCube );
+				scenePass.clear = false;
+
+				adaptToneMappingPass = new THREE.AdaptiveToneMappingPass( true, 256 );
+				adaptToneMappingPass.needsSwap = true;
+				ldrToneMappingPass = new THREE.AdaptiveToneMappingPass( false, 256 );
+				hdrToneMappingPass = new THREE.AdaptiveToneMappingPass( false, 256 );
+				bloomPass = new THREE.BloomPass();
+				var gammaCorrectionPass = new THREE.ShaderPass( THREE.GammaCorrectionShader );
+				gammaCorrectionPass.renderToScreen = true;
+
+				dynamicHdrEffectComposer.addPass( skyboxPass );
+				dynamicHdrEffectComposer.addPass( scenePass );
+				dynamicHdrEffectComposer.addPass( adaptToneMappingPass );
+				// dynamicHdrEffectComposer.addPass( debugPass );
+				dynamicHdrEffectComposer.addPass( bloomPass );
+				dynamicHdrEffectComposer.addPass( gammaCorrectionPass );
+
+				hdrEffectComposer.addPass( skyboxPass );
+				hdrEffectComposer.addPass( scenePass );
+				hdrEffectComposer.addPass( hdrToneMappingPass );
+				hdrEffectComposer.addPass( bloomPass );
+				hdrEffectComposer.addPass( gammaCorrectionPass );
+
+				ldrEffectComposer.addPass( skyboxPass );
+				ldrEffectComposer.addPass( scenePass );
+				ldrEffectComposer.addPass( ldrToneMappingPass );
+				ldrEffectComposer.addPass( bloomPass );
+				ldrEffectComposer.addPass( gammaCorrectionPass );
+				*/
+				///////////////////////////////// bloompass end///////////////////////
+					
 				
+	///////////////////////////////////////// directional light /////////////////////////////////////////			
 	var dirLight = new THREE.DirectionalLight(0xffffff, 3);
     dirLight.position.set(100, 100, 50);
     scene.add(dirLight);
+	
 /*************************Model ****************************************************************************************/
 	var loader = new THREE.STLLoader();
 	/* Adding image to the texture of the particle geometry */
@@ -552,55 +974,99 @@ var checkRotate = false,
 
 	var onError = function ( xhr ) { };
 	
+	///////////////////////////////// crater mesh cubemap ////////////////////////////////////////////////////
 	
+
+    var craterTextureURLs = [  // URLs of the six faces of the cube map 
+            "./crater_images/+X.png",
+            "./crater_images/-X.png",
+            "./crater_images/+Y.png",
+            "./crater_images/-Y.png",
+            "./crater_images/+Z.png",
+            "./crater_images/-Z.png"
+       ];
+
+
+
+    var crater_cube;
+	
+    //camera.position.z = 3;  // Can't be right at 0, or the controls won't rotate it.
+    /*var craterTextures = loadTextures(craterTextureURLs);
+    var craterMaterials = [];
+    for (var i = 0; i < 6; i++) {
+        craterMaterials.push( new THREE.MeshBasicMaterial( {
+			alphaTest:0.5,
+            side: THREE.BackSide,  // IMPORTANT: To see the inside of the cube, back faces must be rendered!
+            map: craterTextures[i]
+        } ) );
+    }
+    crater_cube = new THREE.Mesh( new THREE.CubeGeometry(200,200,200), new THREE.MeshFaceMaterial(craterMaterials) );
+    crater_cube.position.set(0,6,0);
+	crater_cube.scale.set(4,4,4);
+	crater_cube.rotateOnAxis( new THREE.Vector3(1,0,0),  -Math.PI/2 );*/
+	//scene.add(crater_cube);
+	//camera.rotateOnAxis( new THREE.Vector3(0,-1,0),  Math.PI );
+	//camera.position.set(0,-8,20);
+	
+	////////////////////////mars equirectangular////////////////////////////////////
+	/*var points = [];
+	for ( var i = 0; i < 10; i ++ ) {
+	points.push( new THREE.Vector2( Math.sin( i * 0.2 ) * 10 + 5, ( i - 5 ) * 2 ) );
+	}
+	 var earth = textureLoader.load( './gale_crater/martian_surface2.jpg' );
+	earthMesh = new THREE.Mesh(
+					new THREE.LatheBufferGeometry( points ),
+					new THREE.MeshBasicMaterial( {  map: earth, blending: THREE.AdditiveBlending,side:THREE.BackSide, alphaTest:0.5} )
+				);
+	earthMesh.position.set(0, 0, 0);
+	
+	scene.add( earthMesh );*/
+    //earthMesh.visible=false;
 	///////////////////////////////////////////////////// alphamap test ////////////////////////////////////////
-	var mapT = textureLoader.load("./gale_crater/mars_rover.png");
+	var mapT = textureLoader.load("./gale_crater/bb8.png");
 	mapT.anisotropy = 4;
-	var materialT = new THREE.MeshBasicMaterial( { map: mapT, alphaTest: 0.5, side: THREE.DoubleSide } );
+	var materialT = new THREE.MeshBasicMaterial( { map: mapT, alphaTest: 0.5,side: THREE.DoubleSide } );
 	var geometryT = new THREE.CircleBufferGeometry( 2, 32 );
 	var meshT = new THREE.Mesh( geometryT, materialT );
-	meshT.position.x = 0;
+	meshT.position.x = -3;
 	meshT.position.y = -3.3;
-	meshT.position.z=-11;
+	meshT.position.z=-10.5;
+	meshT.scale.set(1,1,1);
 	
-	/* Adding reticle on menu toggle */
+	//camera.position.set(0,7,1);
+	//camera.lookAt(scene.position);
+		/* Adding reticle on menu toggle */
 	Reticulum.add( meshT, {
 		reticleHoverColor: 0x00fff6,
 		fuseVisible: true,
 		onGazeOver: function()
 		{
 		
-			context6.clearRect(1,1,200,200); //clearing webgl canvas for text toggles and redrawing text on the same
-			context6.fillStyle = "rgba(255,0,0,0.95)";
-			context6.fillText('Dwell here to toggle menu!', 0, 50); //textmeshes are initialized later
-			textMesh6.visible = true; //made visible after redrawing text
+			
 		},
 		onGazeOut: function()
 		{
-			// hide the text toggle when user moves reticle off targeted object
-			textMesh6.visible = false;
+		
 		},
 		
 		onGazeLong: function() //actions for long gaze or dwell as the name suggests
 		{
 		
 			/*if else block basically for toggling menu buttons - make them invisible if already visible and vice versa*/
-			if((rotationToggle.visible) || (clusterToggle.visible) || (visibleToggle.visible) || (fovToggle.visible) || (positionToggle.visible) ) 
+			if((rotationToggle.visible) || (clusterToggle.visible) /*|| (visibleToggle.visible)*/ /*|| (fovToggle.visible)*/ || (positionToggle.visible) ) 
 			{
 			    rotationToggle.visible = false;
 				clusterToggle.visible = false;
-				visibleToggle.visible = false;
-				fovToggle.visible = false;
+				//visibleToggle.visible = false;
+				//fovToggle.visible = false;
 				positionToggle.visible = false;
-
 			}
 			
 			else{
-
 				rotationToggle.visible = true;
 				clusterToggle.visible = true;
-				visibleToggle.visible = true;
-				fovToggle.visible = true;
+				//visibleToggle.visible = true;
+				//fovToggle.visible = true;
 				positionToggle.visible = true;
 		
 				}
@@ -608,7 +1074,7 @@ var checkRotate = false,
 		
 	});
 	scene.add( meshT );
-			
+	//scene.add(menuGroup);	
 	
 	
 /***********Desert_City*************/	
@@ -643,7 +1109,7 @@ var checkRotate = false,
  */
 function loadTextures(textureURLs) {
 
-   
+   //alert(textureURLs);
  
    var textures = [];
    for (var i = 0; i < textureURLs.length; i++) {
@@ -655,36 +1121,42 @@ function loadTextures(textureURLs) {
 }
 
 
-	/****************************************** cubemap cube      *********************************************/
-    var scene, camera, renderer;
 
-    var textureURLs = [  // URLs of the six faces of the cube map 
-            "./park/posx.jpg",
-            "./park/negx.jpg",
-            "./park/posy.jpg",
-            "./park/negy.jpg",
-            "./park/posz.jpg",
-            "./park/negz.jpg"
-       ];
-
-
-
-    var cube;
 	
-    //camera.position.z = 3;  // Can't be right at 0, or the controls won't rotate it.
-    var textures = loadTextures(textureURLs);
-    var materials = [];
-    for (var i = 0; i < 6; i++) {
-        materials.push( new THREE.MeshBasicMaterial( {
-            color: "white",
-            side: THREE.BackSide,  // IMPORTANT: To see the inside of the cube, back faces must be rendered!
-            map: textures[i]
-        } ) );
-    }
-    cube = new THREE.Mesh( new THREE.CubeGeometry(100,100,100), new THREE.MeshFaceMaterial(materials) );
-    cube.position.set(0,5,5);
-	//scene.add(cube);
+	//////////////////////////////////////// text experiment////////////////////////////////////////////////
+	var text = textureLoader.load( "./images/text_images/alpha.png" );
+	text.anisotropy = 4;
+	var textgeo = new THREE.PlaneBufferGeometry( 0.15, 0.15, 32 );
+	var textmat = new THREE.MeshBasicMaterial( { map:text, side: THREE.FrontSide,transparent:true,opacity:0.5} );
+	var plane = new THREE.Mesh( textgeo, textmat );
+	plane.position.set(0,0.2,-1);
+	//scene.add( plane );
+	
+
+	
+   /////////////////////////////////////////////////////skydome ////////////////////////////////////////////////////////
+   /*Making a skybox, or more appropriately a skydome*/
+	var ge = new THREE.SphereGeometry(500,60,40); //the geometry on which the image will be rendered
+	var ma = new THREE.MeshBasicMaterial();    //the material type - Mesh Basic Material - A material for drawing geometries in a simple shaded (flat or wireframe) way.
+	ma.map = new THREE.TextureLoader().load('./images/360-2_despeckle.jpg'); //The texture map - the actual image
+    ma.side = THREE.BackSide;  //Defines which of the face sides will be rendered - front, back or both. - Default is THREE.FrontSide. Other options are THREE.BackSide and THREE.DoubleSide.
+	skybox = new THREE.Mesh(ge, ma); // Mesh object which will have geometry and material attributes as initialized above
+	//skybox.scale.set(0.09,0.09,0.09); //the scale of the object //despeckled_scale
+	//skybox.position.set(0,0,-12); //despeckled position
+	scene.add(skybox); //added to the scene
+	skybox.scale.set(2,2,2); //the scale of the object 
+	//skybox.position.set(0,0,-1);
+	skybox.visible = true; //made visible by default
    
+   
+   /*	setTimeout(function(){
+			if (clusterCube.visible == true)
+				clusterCube.visible = false;
+			else clusterCube.visible = true;
+			
+			}, 2000000000000);	
+   */
+  
    	/* Function to detect if the application has been opened in a mobile browser */
 	function detectmob() { 
 
@@ -721,7 +1193,6 @@ function onWindowResize()
         }
 
         controls = new THREE.DeviceOrientationControls(camera, true);
-		//ert(controls);
         controls.connect();
 		//controls.update();
 		//element.addEventListener('click', fullscreen, false);
@@ -754,14 +1225,8 @@ function onWindowResize()
 	{
 		/* Updating reticulum with every frame */
 		Reticulum.update();
-
-		 
 		requestAnimationFrame( animate );
-			
 		controls.update();//updating the controls object with every frame
-			
-
-
 		render(); //call to render per frame
 	} //end of animate
 
@@ -770,15 +1235,122 @@ function onWindowResize()
 ************************************************************************************************/
 	function render() 
 	{
+	
+	if (parameters.zz == true){
+		clusterCube.visible=false;
+		visibleCube.visible = false;
+		clusterCube = clusterCube0;
+		visibleCube = visibleCube0;
+		clusterCube.visible = true;
+		visibleCube.visible = true;
+	}
+	if (parameters.z5 == true){
+		clusterCube.visible=false;
+		visibleCube.visible = false;
+		clusterCube = clusterCube25;
+		visibleCube = visibleCube25;
+		clusterCube.visible = true;
+		visibleCube.visible = true;
+	}
+	if (parameters.z10 == true){
+		clusterCube.visible=false;
+		visibleCube.visible = false;
+		clusterCube = clusterCube10;
+		visibleCube = visibleCube10;
+		clusterCube.visible = true;
+		visibleCube.visible = true;
+	}
+		
 		if (checkRotate) //roatate if the checkRotate flag is set to true
 		{
-		
-			scene.rotateOnAxis(ROTATE_AXIS, rotateAngle);
-	 
+			
+			visibleCube.rotateOnAxis(ROTATE_AXIS, ROTATE_ANGLE_WIDE);
+			clusterCube.rotateOnAxis(ROTATE_AXIS, ROTATE_ANGLE_WIDE);
+			skybox.rotateOnAxis(ROTATE_AXIS, rotateAngle);
 			 
 		}
+		camera.rotateOnAxis( new THREE.Vector3(1,0,0),  Math.PI/10);	
+		if ((blink_flag == true) && (fade_counter == 0)  )
+		{
 		
-		effect.render(scene, camera);
+	   
+			setTimeout(function(){	
+			
+				
+				for (var i = 0; i < 6; i++) {
+					
+					if (clusterCube.material.materials[i].opacity > -0.09){
+					
+					clusterCube.material.materials[i].opacity-=0.01;}
+				
+				}
+				
+			}, 2500);
+			
+			
+		}
+			
+		if ((clusterCube.material.materials[0].opacity < 0) && (fade_counter == 0))
+		{fade_counter=1;console.log(fade_counter);}
+	
+			
+		if ((blink_flag == true) && (fade_counter == 1) && (clusterCube.material.materials[0].opacity < 1.1))
+			{
+				fade_counter = 3;
+				console.log(fade_counter);
+				
+				
+			}
+		if ((fade_counter == 3) && (clusterCube.material.materials[1].opacity < 1.1))
+		{
+		
+		
+				
+				setTimeout(function(){	
+				
+					for (var i = 0; i < 6; i++) {
+						
+						if (clusterCube.material.materials[i].opacity < 1.01){
+						clusterCube.material.materials[i].opacity+=0.01;}
+					
+					}
+					
+				},2500);
+			
+			if (Math.floor(clusterCube.material.materials[1].opacity) == 1)
+			{
+				console.log("ab andar");
+				if (blink_flag == true)
+				{
+					fade_counter = 0;
+					
+				}
+				else fade_counter = 4;
+				
+				console.log(fade_counter);
+			}
+		}
+		
+		if ((blink_flag == false) && (parameters.clo == true))
+		{
+				fade_counter = 0;
+				for (var i = 0; i < 6; i++) {
+						
+					
+						clusterCube.material.materials[i].opacity=1;
+					
+					}
+		}
+		
+	
+			
+			
+			
+	
+		/*ldrEffectComposer.render( 0.17 );
+		hdrEffectComposer.render( 0.17 );
+		dynamicHdrEffectComposer.render( 0.17 );
+		*/effect.render(scene, camera);
 		
 	} //end of render()
 
@@ -786,11 +1358,11 @@ function onWindowResize()
 	/* custom timeout function for toggle text viewing */
 	function textTimeout()
 	{
-	textMesh1.visible = false;
-	textMesh2.visible = false;
-	textMesh3.visible = false;
-	textMesh4.visible = false;
-	textMesh5.visible = false;
+	//textMesh1.visible = false;
+	//textMesh2.visible = false;
+	//textMesh3.visible = false;
+	//textMesh4.visible = false;
+	//textMesh5.visible = false;
 	//menuToggle.visible  = true;
 	}
 	/* custom timeout function for toggle buttons viewing */
@@ -798,13 +1370,31 @@ function onWindowResize()
 	{
 		rotationToggle.visible = false;
 		clusterToggle.visible = false;
-		visibleToggle.visible = false;
-		fovToggle.visible = false;
+		//visibleToggle.visible = false;
+		//fovToggle.visible = false;
 		positionToggle.visible = false;
 		setTimeout(textTimeout, 1200);
-		textMesh.visible = true;
+		//textMesh.visible = true;
 				
 	}
+	/**
+ * Moving camera to the given location
+ * @param location
+ */
+function flyTo(location) 
+{
+    // fly to new position
+    var oldPosition = camera.position;
+    camera.position.set(location.x, location.y, location.z);
+
+	// set new rotation origin for the visible and cluster particles, so that the observer sees them from the new position's perspective and the stars rotate accordingly around him/her
+    visibleCube.position.set(location.x, location.y,  oldPosition.z -  location.z);
+	clusterCube.position.set(location.x, location.y,  oldPosition.z - location.z);
+	
+	
+	}
+
+
 </script>
 
  

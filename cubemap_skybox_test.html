@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<title>Webb-Cluster</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="stylesheet" href="src/css/main.css">
+	
+
+</head>
+
+<body></body>
+
+<script src="src/js/vendor/three.min.js"></script> <!-- threeJS - the root of all things visual on the application -->
+
+<!--
+  three.js 3d library
+  -->
+	<script src="node_modules/three/three.js"></script>
+
+<script>
+		(function() {
+
+var scene,
+    camera;
+
+/*function calls */
+init(); //intialization of objects and the scene
+animate(); // animation of those objects
+
+
+/****************************************************************************************
+*************Contains initialization of different scene objects***************************
+*****************************************************************************************/
+function init()
+{
+    scene = new THREE.Scene(); //initialising the scene
+	camera = new THREE.PerspectiveCamera(FOV_WIDE,
+                                         window.innerWidth / window.innerHeight,
+                                         0.1,
+                                         20000); //initialising the camera with Near clipping plane as 0.1 and Far Clipping plane as 20000
+	var loader = new THREE.CubeTextureLoader();
+	loader.setPath( 'src/images/' );
+
+	var textureCube = loader.load( [
+		'pos-x.png', 'neg-x.png',
+		'pos-y.png', 'neg-y.png',
+		'pos-z.png', 'neg-z.png'
+	] );
+
+
+	var material = new THREE.MeshBasicMaterial( { color: 0xffffff, envMap: textureCube } );
+
+	skybox = new THREE.Mesh( new THREE.CubeGeometry( 100000, 100000, 100000 ), material );
+	scene.add(skybox);
+	skybox.visible = true;
+	
+	} //end of init()
+	function animate() 
+{
+	
+	 
+	requestAnimationFrame( animate );
+		
+	
+	render(); //call to render per frame
+} //end of animate
