@@ -13,7 +13,7 @@ Tech Used –
 
 Steps to run -
 
-1) git clone https://github.iu.edu/singhgag/VR-Webb-Cluster . (which will clone the repository to the local file system)
+1) git clone this repository.
 2) Navigate to the folder paraview_version. 
 3) npm install (which will install any missing or all dependencies need for the application as specified in the node configuration, including grunt)
 4) grunt serve (which will launch an instance of the grunt dev server on port 7000 and open the same for viewing in a new browser window - use Google Chrome preferably for a better experience )
